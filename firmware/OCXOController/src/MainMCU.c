@@ -3,8 +3,6 @@
 HandlersMCU mcuHandlers;
 uint32_t vcoValue = CONTROL_INITIAL_VCO;
 
-volatile uint8_t firstPPSDetected = 0;
-
 LIFO_d risingEdgesFrequencies;
 LIFO_d fallingEdgesFrequencies;
 double risingEdgesArray [CONTROL_POINTS_IN_MEMORY];
@@ -22,9 +20,13 @@ LIFO_u32 fallingOCXORef;
 uint32_t risingOCXORefArray [CONTROL_POINTS_IN_MEMORY];
 uint32_t fallingOCXORefArray[CONTROL_POINTS_IN_MEMORY];
 
-double Kp = 2.5;
-double Ki = 0;
-double Kd = 0;
+double Kp = 0.01;
+double Ki = 0.006;
+double Kd = 0.01;
+// Low pass filter of the VCO.
+double Nf = 0.05;
+
+double freqOffset = 1.3;
 
 uint8_t txBuffer[100];
 const double TIME_BETWEEN_PPS =  1.0 / PPS_REF_FREQ;
@@ -64,6 +66,12 @@ void mcuStart(DAC_HandleTypeDef* dacHandler,
 }
 
 void mcuLoop() {
+    static uint32_t lastUpdateVCOTime = 0;
+    static uint32_t currentVCO = CONTROL_INITIAL_VCO;
+    if((HAL_GetTick() - lastUpdateVCOTime) < CONTROL_VCO_UPDATE_TIME_ms) return;
+
+    lastUpdateVCOTime = HAL_GetTick();
+
     // Find matching timestamps to generate the errors and calculate the new VCO voltage if a new
     // error value is found.
     if(newRisingEdge) {
@@ -77,11 +85,14 @@ void mcuLoop() {
     // }
 
     // Actuator section.
-    HAL_DAC_SetValue(mcuHandlers.dacHandler, DAC_CHANNEL_1, DAC_ALIGN_12B_R, vcoValue);
+
+    // Discrete low pass filter for the VCO.
+    currentVCO = currentVCO * Nf + vcoValue * (1.0 - Nf);
+    HAL_DAC_SetValue(mcuHandlers.dacHandler, DAC_CHANNEL_1, DAC_ALIGN_12B_R, currentVCO);
 
     static uint8_t rxBuffer[512];
     uint32_t rxLen;
-    if(readMessageUSB(rxBuffer, &rxLen)) {
+    if(readMessageUSB(rxBuffer, &rxLen) && (rxLen > 0)) {
         processUSBMessage((char*) rxBuffer, rxLen);
     }
 
@@ -142,12 +153,12 @@ uint8_t findMatchedTimestampsAndCalculateFrequency(LIFO_u32* ppsRef, LIFO_u32* o
 }
 
 void calculateNewVCO(LIFO_d* freqValues) {
-    double lastError;
+    double lastFrequency;
 
-    // The last value in the FIFO is the last error calculated.
-    peek_LIFO_d(freqValues, &lastError);
+    // The last value in the FIFO is the last frequency calculated.
+    peek_LIFO_d(freqValues, &lastFrequency);
 
-    uint32_t len = sprintf((char*)txBuffer, "D: %.10f\n", lastError);
+    uint32_t len = sprintf((char*)txBuffer, "F=%.12f\n", lastFrequency);
     sendMessageUSB(txBuffer, len);
 
     #ifdef CONTROL_HYSTERESIS_ENABLED 
@@ -183,7 +194,7 @@ void pid_controlMode(LIFO_d* freqValues) {
     double frequencyIntegral = PPS_REF_FREQ * TIME_BETWEEN_PPS * (freqValues->len - 1);
     for(int i = 1; i < freqValues->len; i++) {
         freq0 = freq1;
-        peekAt_LIFO_d(freqValues, 0, &freq1);
+        peekAt_LIFO_d(freqValues, i, &freq1);
 
         // Area of the trapezoid to calculate the components of the integral.
         frequencyIntegral -= (freq0 + freq1) * TIME_BETWEEN_PPS / 2.0;
@@ -202,13 +213,29 @@ void pid_controlMode(LIFO_d* freqValues) {
     // For 0V, the offset is -7 Hz, for 5V is +7 Hz. 
     // Remember that the OCXO frequency is being divided to math that of the reference PPS.
 
-    // TODO: Remove this Kp...
-    double newVCO = Kp * lerp(-OCXO_CONTROL_FREQUENCY_RANGE, 0.0, 
+    double newVCO = lerp(-OCXO_CONTROL_FREQUENCY_RANGE, 0.0, 
                               OCXO_CONTROL_FREQUENCY_RANGE,  4096.0,
-                              actuatorInput * PPS_TIMER_FREQ / PPS_REF_FREQ);
-    if(newVCO > 4095)   newVCO = 4095;
-    else if(newVCO < 0) newVCO = 0;
-    vcoValue = (int) newVCO;
+                              actuatorInput * PPS_TIMER_FREQ / PPS_REF_FREQ + freqOffset);
+    
+    if(newVCO > 4095.0) {
+        vcoValue = 4095;
+    }else if(newVCO < 0.0) {
+        vcoValue = 0;
+    }else {
+        vcoValue = (int) newVCO;
+    }
+
+    uint32_t len = sprintf((char*)txBuffer, "VCO=%.12f, %ld\n", newVCO, vcoValue);
+    sendMessageUSB(txBuffer, len);
+    len = sprintf((char*)txBuffer, "e=%.12f, Kp=%.12f\n", frequencyError, Kp);
+    sendMessageUSB(txBuffer, len);
+    len = sprintf((char*)txBuffer, "i=%.12f, Ki=%.12f\n", frequencyIntegral, Ki);
+    sendMessageUSB(txBuffer, len);
+    len = sprintf((char*)txBuffer, "d=%.12f, Kd=%.12f\n", frequencyDerivative, Kd);
+    sendMessageUSB(txBuffer, len);
+    len = sprintf((char*)txBuffer, "Of=%.12f\n", freqOffset);
+    sendMessageUSB(txBuffer, len);
+
 }
 
 void step_controlMode(double deltaTime) {
@@ -231,18 +258,42 @@ void step_controlMode(double deltaTime) {
 void processUSBMessage(char* buf, uint32_t len) {
     if(len == 0) return;
     
+    uint32_t msgLen = 0;
+
     // Detect the Kp, Ki and Kd values for the PID.
-    if(len > 3 && buf[0] == 'K' && buf[2] == '=') {
+    if(len > 3 && buf[2] == '=') {
         buf[len - 1] = 0;
 
-        if(buf[1] == 'p') {
-            Kp = atof(buf + 3);
-        }else if(buf[1] == 'i') {
-            Ki = atof(buf + 3);
-        }else if(buf[1] == 'd') {
-            Kd = atof(buf + 3);
+        if(buf[0] == 'K'){
+            if(buf[1] == 'p') {
+                Kp = atof(buf + 3);
+                msgLen = sprintf((char*)txBuffer, "New Kp = %.10f\n", Kp);
+            }else if(buf[1] == 'i') {
+                Ki = atof(buf + 3);
+                msgLen = sprintf((char*)txBuffer, "New Ki = %.10f\n", Ki);
+            }else if(buf[1] == 'd') {
+                Kd = atof(buf + 3);
+                msgLen = sprintf((char*)txBuffer, "New Kd = %.10f\n", Kd);
+            }
+        }else if(buf[0] == 'N' && buf[1] == 'f') {
+            Nf = atof(buf + 3);
+            msgLen = sprintf((char*)txBuffer, "New Nf = %.10f\n", Nf);
+        }else if(buf[0] == 'O' && buf[1] == 'f') {
+            freqOffset = atof(buf + 3);
+            msgLen = sprintf((char*)txBuffer, "New Freq Offset = %.10f\n", freqOffset);
         }
     }
+
+    if(strncmp(buf, "CONN", 4) == 0) {
+        setUSBConnected(1);
+        msgLen = sprintf((char*)txBuffer, "### OCXOController v0.1 ###\n");
+    }
+
+    if(strncmp(buf, "DISC", 4) == 0) {
+        setUSBConnected(0);
+    }
+
+    sendMessageUSB(txBuffer, msgLen);
 }
 
 void freqDivider_IRQ() {
@@ -252,29 +303,6 @@ void freqDivider_IRQ() {
 void PPS_IRQ() {
     uint32_t itEnabled = mcuHandlers.ppsHandler->Instance->DIER;
     uint32_t itSource   = mcuHandlers.ppsHandler->Instance->SR;
-
-    // This if is only entered at the beginning on a rising edge of the reference PPS.
-    if((firstPPSDetected == 0) && ((itSource & TIM_FLAG_CC1) == TIM_FLAG_CC1)) {
-        // Try to start the frequency divider as close as possible from the rising edge of the
-        // PPS. 
-
-        // Trigger a quick toggle by resetting the counter. This will set the GPIO on a certain
-        // state. Get which state and if it's LOW, toggle it again. 
-        __HAL_TIM_SET_COUNTER(mcuHandlers.freqDivHandler, 0);
-        while((PPS_OUT_GPIO_Port->IDR & PPS_OUT_Pin) == 0) {
-        	__HAL_TIM_SET_COUNTER(mcuHandlers.freqDivHandler, 0);
-        }
-
-        firstPPSDetected = 1;
-
-        // Exit this IRQ early.
-        __HAL_TIM_CLEAR_FLAG(mcuHandlers.ppsHandler, TIM_FLAG_UPDATE);
-        __HAL_TIM_CLEAR_FLAG(mcuHandlers.ppsHandler, TIM_FLAG_CC1);
-        __HAL_TIM_CLEAR_FLAG(mcuHandlers.ppsHandler, TIM_FLAG_CC2);
-        __HAL_TIM_CLEAR_FLAG(mcuHandlers.ppsHandler, TIM_FLAG_CC3);
-        __HAL_TIM_CLEAR_FLAG(mcuHandlers.ppsHandler, TIM_FLAG_CC4);
-        return;
-    }
 
     uint8_t newRising = 0;
     uint8_t newFalling = 0;

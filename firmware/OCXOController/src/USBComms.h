@@ -8,10 +8,14 @@
 
 #include "CircularBuffer.h"
 
+#define USB_TIMEOUT_ms 200
+
 void initUSBComms();
 
 uint8_t sendMessageUSB(uint8_t* message, uint32_t messageLength);
 
 uint8_t readMessageUSB(uint8_t* message, uint32_t* messageLength);
+
+void setUSBConnected(uint8_t connected);
 
 #endif // USB_COMMS_h

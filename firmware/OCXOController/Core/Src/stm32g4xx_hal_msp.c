@@ -163,15 +163,24 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
     __HAL_RCC_TIM1_CLK_ENABLE();
 
     __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     /**TIM1 GPIO Configuration
     PC4     ------> TIM1_ETR
+    PA9     ------> TIM1_CH2
     */
-    GPIO_InitStruct.Pin = OCXO_OUT_Pin;
+    GPIO_InitStruct.Pin = GPIO_PIN_4;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
-    HAL_GPIO_Init(OCXO_OUT_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF6_TIM1;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM1_MspInit 1 */
 
@@ -262,10 +271,11 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)
     /**TIM1 GPIO Configuration
     PC4     ------> TIM1_ETR
     PA8     ------> TIM1_CH1
+    PA9     ------> TIM1_CH2
     */
-    HAL_GPIO_DeInit(OCXO_OUT_GPIO_Port, OCXO_OUT_Pin);
+    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_4);
 
-    HAL_GPIO_DeInit(PPS_OUT_GPIO_Port, PPS_OUT_Pin);
+    HAL_GPIO_DeInit(GPIOA, PPS_OUT_Pin|GPIO_PIN_9);
 
   /* USER CODE BEGIN TIM1_MspDeInit 1 */
 

@@ -65,8 +65,6 @@ void Error_Handler(void);
 #define OCXO_PPS_L_GPIO_Port GPIOA
 #define OCXO_VCO_Pin GPIO_PIN_4
 #define OCXO_VCO_GPIO_Port GPIOA
-#define OCXO_OUT_Pin GPIO_PIN_4
-#define OCXO_OUT_GPIO_Port GPIOC
 #define PPS_OUT_Pin GPIO_PIN_8
 #define PPS_OUT_GPIO_Port GPIOA
 #define PPS_REF_H_Pin GPIO_PIN_15

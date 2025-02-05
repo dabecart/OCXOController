@@ -25,6 +25,8 @@
 // Initial voltage generated for the VCO.
 #define CONTROL_INITIAL_VCO 2048 // Start in the middle (the ADC is 12 bits: [0, 4096))
 
+#define CONTROL_VCO_UPDATE_TIME_ms 10
+
 // Depending on the voltage on the VCO pin of the OCXO, its frequency can vary +- this value.
 #define OCXO_CONTROL_FREQUENCY_RANGE 7.0
 
