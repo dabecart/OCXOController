@@ -22,6 +22,7 @@ typedef struct
     uint32_t    len;                            // Number of bytes to read (stored bytes count).
     uint32_t    head;                           // Index to read from. +1 to write to.
     uint32_t*   data;                           // Data buffer.
+    uint8_t     locked;
 } LIFO_u32;
 
 /**************************************** FUNCTION *************************************************

@@ -4,7 +4,7 @@ import time
 import re
 
 # Serial port settings
-SERIAL_PORT = "COM6"  # Change this according to your system (e.g., "/dev/ttyACM0" for Linux)
+SERIAL_PORT = "/dev/ttyACM0"  # Change this according to your system (e.g., "/dev/ttyACM0" for Linux)
 BAUD_RATE = 921600
 CSV_FILE = "data" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
 

@@ -15,10 +15,11 @@
 void init_LIFO_u32(LIFO_u32* pLIFO_u32, uint32_t* dataArray, uint32_t bufferSize) {
     if(pLIFO_u32 == NULL || dataArray == NULL || bufferSize == 0) return;
 
-    pLIFO_u32->data = dataArray;
-    pLIFO_u32->size = bufferSize;
-    pLIFO_u32->len  = 0;
-    pLIFO_u32->head = 0;
+    pLIFO_u32->data   = dataArray;
+    pLIFO_u32->size   = bufferSize;
+    pLIFO_u32->len    = 0;
+    pLIFO_u32->head   = 0;
+    pLIFO_u32->locked = 0;
 }
 
 void empty_LIFO_u32(LIFO_u32* pLIFO_u32) {
@@ -30,6 +31,8 @@ void empty_LIFO_u32(LIFO_u32* pLIFO_u32) {
 }
 
 uint8_t push_LIFO_u32(LIFO_u32* pLIFO_u32, uint32_t item) {
+    if(pLIFO_u32->locked) return 0;
+
     pLIFO_u32->head = (pLIFO_u32->head + 1) % pLIFO_u32->size;
     pLIFO_u32->data[pLIFO_u32->head] = item;
 
@@ -44,7 +47,10 @@ uint8_t pop_LIFO_u32(LIFO_u32* pLIFO_u32, uint32_t* item) {
     if(item != NULL) {
         *item = pLIFO_u32->data[pLIFO_u32->head];
     }
-    pLIFO_u32->head = (pLIFO_u32->head - 1) % pLIFO_u32->size;
+    
+    if(pLIFO_u32->head == 0) pLIFO_u32->head = pLIFO_u32->size - 1;
+    else pLIFO_u32->head--;
+
     pLIFO_u32->len--;
     return 1;
 }
@@ -59,7 +65,13 @@ uint8_t peek_LIFO_u32(LIFO_u32* pLIFO_u32, uint32_t* item) {
 uint8_t peekAt_LIFO_u32(LIFO_u32* pLIFO_u32, uint32_t index, uint32_t* item) {
     if(index >= pLIFO_u32->len) return 0;
     
-    uint32_t headIndex = (pLIFO_u32->head - index) % pLIFO_u32->size;
+    uint32_t headIndex;
+    if(pLIFO_u32->head >= index) {
+        headIndex = pLIFO_u32->head - index;
+    }else {
+        // Index overflow.
+        headIndex = pLIFO_u32->size - (index - pLIFO_u32->head);
+    }
     *item = pLIFO_u32->data[headIndex];
     return 1;
 }
