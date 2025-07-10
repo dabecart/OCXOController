@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "main.h": "c",
+        "stm32g4xx_hal.h": "c",
+        "stm32g473xx.h": "c",
+        "stdint.h": "c",
+        "gpiocontroller.h": "c",
+        "xiosbase": "cpp",
+        "gui.h": "c",
+        "st7735.h": "c",
+        "circularbuffer.h": "c"
+    },
+    "cSpell.words": [
+        "OCXO"
+    ],
+    "stm32-for-vscode.openOCDPath": false,
+    "stm32-for-vscode.makePath": false,
+    "stm32-for-vscode.armToolchainPath": false,
+    "makefile.makefilePath": "Debug\\makefile",
+    "makefile.configureOnOpen": true
+}

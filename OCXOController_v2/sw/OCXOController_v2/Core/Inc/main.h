@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "MainMCU.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -59,6 +59,20 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define TEST_LED_Pin GPIO_PIN_13
+#define TEST_LED_GPIO_Port GPIOC
+#define TFT_A0_Pin GPIO_PIN_0
+#define TFT_A0_GPIO_Port GPIOB
+#define TFT_RESET_Pin GPIO_PIN_1
+#define TFT_RESET_GPIO_Port GPIOB
+#define TFT_CS_Pin GPIO_PIN_2
+#define TFT_CS_GPIO_Port GPIOB
+#define USB_ALERT_Pin GPIO_PIN_11
+#define USB_ALERT_GPIO_Port GPIOB
+#define PG_1V8_Pin GPIO_PIN_12
+#define PG_1V8_GPIO_Port GPIOB
+#define PG_3V3_Pin GPIO_PIN_13
+#define PG_3V3_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
