@@ -30,9 +30,9 @@ uint8_t sendMessageUSB(uint8_t* message, uint32_t messageLength) {
     return 1;
 }
 
-uint8_t readMessageUSB(uint8_t* message, uint32_t* messageLength) {
+uint8_t readMessageUSB(uint32_t maxLength, uint8_t* message, uint32_t* messageLength) {
     uint8_t lastRead = 0;
-    for(uint32_t i = 0; i < rxBuffer.len; i++) {
+    for(uint32_t i = 0; i < rxBuffer.len && i < maxLength; i++) {
         peekAt_cb(&rxBuffer, i, &lastRead);
         if(lastRead == '\n') {
             *messageLength = i + 1;
@@ -48,6 +48,6 @@ void setUSBConnected(uint8_t connected) {
 }
 
 // Defined in usbd_cdc_if.h and integrated in the CDC_Receive_FS handler of usb_cd_if.c.
-void USB_RXHandler(uint8_t* buf, uint16_t len) {
+void USB_RXHandler(uint8_t* buf, uint32_t len) {
     pushN_cb(&rxBuffer, buf, len);
 }

@@ -8,7 +8,11 @@
         "xiosbase": "cpp",
         "gui.h": "c",
         "st7735.h": "c",
-        "circularbuffer.h": "c"
+        "circularbuffer.h": "c",
+        "xstring": "cpp",
+        "xutility": "cpp",
+        "mathutils.h": "c",
+        "usbcomms.h": "c"
     },
     "cSpell.words": [
         "OCXO"

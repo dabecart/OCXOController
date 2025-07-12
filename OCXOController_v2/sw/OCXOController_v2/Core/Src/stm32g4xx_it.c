@@ -254,7 +254,8 @@ void USB_LP_IRQHandler(void)
 void TIM1_BRK_TIM15_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_BRK_TIM15_IRQn 0 */
-
+  referencePPS_IRQ();
+  return;
   /* USER CODE END TIM1_BRK_TIM15_IRQn 0 */
   HAL_TIM_IRQHandler(&htim1);
   HAL_TIM_IRQHandler(&htim15);
@@ -269,7 +270,8 @@ void TIM1_BRK_TIM15_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-
+  dividedOCXO_IRQ();
+  return;
   /* USER CODE END TIM2_IRQn 0 */
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */

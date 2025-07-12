@@ -2,7 +2,7 @@
 #define GPIO_CONTROLLER_h
 
 #include <string.h>
-#include "TCA6416.h"
+#include "GPIOExpander/TCA6416.h"
 #include "Defines.h"
 
 #define GPIO_CONTROLLER_DEBOUNCE_ms 400

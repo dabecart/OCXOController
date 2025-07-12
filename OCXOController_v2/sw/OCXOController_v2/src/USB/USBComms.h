@@ -6,7 +6,7 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 
-#include "CircularBuffer.h"
+#include "buffers/CircularBuffer.h"
 
 #define USB_TIMEOUT_ms 200
 
@@ -14,7 +14,7 @@ void initUSBComms();
 
 uint8_t sendMessageUSB(uint8_t* message, uint32_t messageLength);
 
-uint8_t readMessageUSB(uint8_t* message, uint32_t* messageLength);
+uint8_t readMessageUSB(uint32_t maxLength, uint8_t* message, uint32_t* messageLength);
 
 void setUSBConnected(uint8_t connected);
 

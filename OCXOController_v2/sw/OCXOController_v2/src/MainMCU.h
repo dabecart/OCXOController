@@ -7,9 +7,10 @@
 #include "main.h"
 
 #include "Defines.h"
-#include "STUSB4500.h"
+#include "USB/STUSB4500.h"
 #include "GPIOController.h"
 #include "GUI.h"
+#include "OCXOController.h"
 
 typedef struct MainHandlers {
     I2C_HandleTypeDef*  hi2c1; // OCXO I2C bus.
