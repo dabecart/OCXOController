@@ -11,6 +11,9 @@
 #include "GPIOController.h"
 #include "GUI.h"
 #include "OCXOController.h"
+#include "EEPROM/CAT24C128.h"
+#include "DAC/MCP4726.h"
+#include "DigitalPot/MCP4531.h"
 
 typedef struct MainHandlers {
     I2C_HandleTypeDef*  hi2c1; // OCXO I2C bus.
@@ -29,6 +32,9 @@ typedef struct MainHandlers {
 
     GPIOController      gpio;
     GUI                 gui;
+    ExEEPROM            eeprom;
+    MCP4531_DigitalPot  pot;
+    MCP4726_DAC         dac;
 } MainHandlers;
 
 void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, SPI_HandleTypeDef* hspi1,
@@ -42,6 +48,6 @@ void loopMain();
 
 void errorTrapMain();
 
-extern MainHandlers mainHandlers;
+extern MainHandlers hmain;
 
 #endif // MAIN_MCU_h

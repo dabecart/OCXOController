@@ -1,5 +1,6 @@
 #include "OCXOController.h"
-#include "main.h"   // For the GPIO names.
+#include "main.h"       // GPIO names.
+#include "MainMCU.h"    // DAC handler.
 
 TIM_HandleTypeDef* ppsTim;
 TIM_HandleTypeDef* ocxoTim;
@@ -80,8 +81,6 @@ uint8_t initOCXOController(TIM_HandleTypeDef* ppsTim_, TIM_HandleTypeDef* ocxoTi
     init_LIFO_u32(&risingOCXO, risingOCXOArray, CONTROL_CLOSE_POINTS_IN_MEMORY);
     init_LIFO_u32(&fallingOCXO, fallingOCXOArray, CONTROL_CLOSE_POINTS_IN_MEMORY);
 
-    // TODO: Initialization of the DAC.
-
     // Initialization of Frequency Divider. 
     uint8_t status = HAL_TIM_OC_Start(ocxoFreqDividerTim_, TIM_CHANNEL_2) == HAL_OK;
 
@@ -128,7 +127,7 @@ void loopOCXOCOntroller() {
     // }
 
     // Actuator section.
-    // TODO: HAL_DAC_SetValue(dacHandler, DAC_CHANNEL_1, DAC_ALIGN_12B_R, currentVCO);
+    setMCP4726DAC(&hmain.dac, currentVCO);
 
     static uint8_t rxBuffer[512];
     uint32_t rxLen;

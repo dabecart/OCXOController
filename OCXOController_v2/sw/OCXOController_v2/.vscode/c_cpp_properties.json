@@ -14,10 +14,10 @@
                 "__CC_ARM"
             ],
             "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "cl.exe",
+            "compilerPath": "D:/Programas/msys2/mingw64/bin/gcc.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-msvc-x64",
+            "intelliSenseMode": "linux-gcc-arm",
             "configurationProvider": "ms-vscode.makefile-tools"
         }
     ],

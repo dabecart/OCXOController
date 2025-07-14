@@ -4,8 +4,9 @@
 // Do an initial check on the STUSB chip. If it fails, do not start the device.
 #define MCU_POWERED_EXTERNALLY 1
 
-#define PPS_TIMER_FREQ  160.0e6 // Hz
-#define PPS_REF_FREQ    1.0     // Hz
+#define PPS_TIMER_FREQ          160.0e6 // Hz
+#define PPS_REF_FREQ            1.0     // Hz
+#define OCXO_MAX_VCO_VOLTAGE    4.0     // Volts
 
 // Number of previous edge times to be stored in memory (to calculate derivatives and integrals).
 #define CONTROL_POINTS_IN_MEMORY 128
@@ -42,5 +43,10 @@
 
 #define I2C_ADD_DAC                 0b1100011
 #define I2C_ADD_POT                 0b0101110
+
+// External EEPROM.
+#define EEPROM_SIGNATURE        "OCXOController, by @dabecart"
+#define EEPROM_SIGNATURE_ADDRS  0
+#define EEPROM_SIGNATURE_LEN    sizeof(EEPROM_SIGNATURE)
 
 #endif // DEFINES_h
