@@ -53,7 +53,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-
+extern CORDIC_HandleTypeDef hcordic;
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

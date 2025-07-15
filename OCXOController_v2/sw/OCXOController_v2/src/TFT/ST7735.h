@@ -2,7 +2,7 @@
 #define ST7735_h
 
 #include "stm32g4xx_hal.h"
-#include "fonts.h"
+#include "Fonts.h"
 
 /****** TFT DEFINES ******/
 #define ST7735_WIDTH  128
@@ -74,6 +74,7 @@
 #define TFT_YELLOW  0xFFE0
 #define TFT_WHITE   0xFFFF
 #define color565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
+#define switched_color565(r, g, b) ((color565(r, g, b) << 8) | (color565(r, g, b) >> 8))&0xFFFF
 
 typedef struct TFT {
     SPI_HandleTypeDef* hspi;
@@ -97,6 +98,8 @@ void fillRectangleTFT(TFT* tft, uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
 void fillScreenTFT(TFT* tft, uint16_t color);
 void drawImageTFT(TFT* tft, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data);
 void invertColorsTFT(TFT* tft, uint8_t invert);
+
+uint16_t toColor565(uint8_t r, uint8_t g, uint8_t b);
 
 void selectTFT_(TFT* tft);
 void unselectTFT_(TFT* tft);

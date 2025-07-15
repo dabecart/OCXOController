@@ -49,4 +49,7 @@
 #define EEPROM_SIGNATURE_ADDRS  0
 #define EEPROM_SIGNATURE_LEN    sizeof(EEPROM_SIGNATURE)
 
+// GUI
+#define GUI_FPS 15
+
 #endif // DEFINES_h

@@ -12,7 +12,10 @@
         "xstring": "cpp",
         "xutility": "cpp",
         "mathutils.h": "c",
-        "usbcomms.h": "c"
+        "usbcomms.h": "c",
+        "math.h": "c",
+        "cordic.h": "c",
+        "bitmaps.h": "c"
     },
     "cSpell.words": [
         "OCXO"
