@@ -2,16 +2,19 @@
 
 MainHandlers hmain;
 
-void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, SPI_HandleTypeDef* hspi1,
+void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, 
+              SPI_HandleTypeDef* hspi1, DMA_HandleTypeDef* hdma_spi1_tx,
               TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, TIM_HandleTypeDef* htim3, 
               TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim5, TIM_HandleTypeDef* htim8, 
               TIM_HandleTypeDef* htim15, 
               UART_HandleTypeDef* huart2, 
-              DMA_HandleTypeDef* hdma_usart2_rx, DMA_HandleTypeDef* hdma_usart2_tx) {
+              DMA_HandleTypeDef* hdma_usart2_rx, DMA_HandleTypeDef* hdma_usart2_tx,
+              CORDIC_HandleTypeDef* hcordic) {
 
     hmain.hi2c1 = hi2c1; 
     hmain.hi2c3 = hi2c3; 
-    hmain.hspi1 = hspi1; 
+    hmain.hspi1 = hspi1;
+    hmain.hdma_spi1_tx = hdma_spi1_tx; 
     hmain.htim1 = htim1; 
     hmain.htim2 = htim2; 
     hmain.htim3 = htim3; 
@@ -22,6 +25,9 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, SPI_HandleType
     hmain.huart2 = huart2; 
     hmain.hdma_usart2_rx = hdma_usart2_rx; 
     hmain.hdma_usart2_tx = hdma_usart2_tx; 
+    hmain.hcordic = hcordic;
+
+    initCORDIC(hcordic);
 
     uint8_t startupChecks = 1;
 
@@ -30,7 +36,7 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, SPI_HandleType
         startupChecks &= startSTUSB4500(hi2c3);
     #endif
 
-    startupChecks &= initGUI(&hmain.gui, hspi1);
+    startupChecks &= initGUI(&hmain.gui, hspi1, hdma_spi1_tx);
 
     startupChecks &= initEEPROM(&hmain.eeprom, hi2c3, I2C_ADD_EEPROM);
 

@@ -14,11 +14,13 @@
 #include "EEPROM/CAT24C128.h"
 #include "DAC/MCP4726.h"
 #include "DigitalPot/MCP4531.h"
+#include "CORDIC/CORDIC.h"
 
 typedef struct MainHandlers {
     I2C_HandleTypeDef*  hi2c1; // OCXO I2C bus.
     I2C_HandleTypeDef*  hi2c3; // Peripherals I2C bus.
     SPI_HandleTypeDef*  hspi1;
+    DMA_HandleTypeDef*  hdma_spi1_tx;
     TIM_HandleTypeDef*  htim1;
     TIM_HandleTypeDef*  htim2;
     TIM_HandleTypeDef*  htim3;
@@ -29,6 +31,7 @@ typedef struct MainHandlers {
     UART_HandleTypeDef* huart2;
     DMA_HandleTypeDef*  hdma_usart2_rx;
     DMA_HandleTypeDef*  hdma_usart2_tx;
+    CORDIC_HandleTypeDef* hcordic;
 
     GPIOController      gpio;
     GUI                 gui;
@@ -37,12 +40,14 @@ typedef struct MainHandlers {
     MCP4726_DAC         dac;
 } MainHandlers;
 
-void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, SPI_HandleTypeDef* hspi1,
+void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, 
+              SPI_HandleTypeDef* hspi1, DMA_HandleTypeDef* hdma_spi1_tx,
               TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, TIM_HandleTypeDef* htim3, 
               TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim5, TIM_HandleTypeDef* htim8, 
               TIM_HandleTypeDef* htim15, 
               UART_HandleTypeDef* huart2, 
-              DMA_HandleTypeDef* hdma_usart2_rx, DMA_HandleTypeDef* hdma_usart2_tx);
+              DMA_HandleTypeDef* hdma_usart2_rx, DMA_HandleTypeDef* hdma_usart2_tx,
+              CORDIC_HandleTypeDef* hcordic);
 
 void loopMain();
 

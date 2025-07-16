@@ -47,6 +47,7 @@ I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c3;
 
 SPI_HandleTypeDef hspi1;
+DMA_HandleTypeDef hdma_spi1_tx;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
@@ -133,8 +134,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_CORDIC_Init();
   /* USER CODE BEGIN 2 */
-  initMain(&hi2c1, &hi2c3, &hspi1, &htim1, &htim2, &htim3, &htim4, &htim5, &htim8, &htim15, 
-           &huart2, &hdma_usart2_rx, &hdma_usart2_tx);
+  initMain(&hi2c1, &hi2c3, &hspi1, &hdma_spi1_tx, &htim1, &htim2, &htim3, &htim4, &htim5, &htim8, &htim15, 
+           &huart2, &hdma_usart2_rx, &hdma_usart2_tx, &hcordic);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -913,6 +914,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+  /* DMA1_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 }
 

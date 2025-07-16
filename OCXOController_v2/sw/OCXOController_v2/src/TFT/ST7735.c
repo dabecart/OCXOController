@@ -245,6 +245,11 @@ void writeDataTFT_(TFT* tft, uint8_t* buff, size_t buff_size) {
     HAL_SPI_Transmit(tft->hspi, buff, buff_size, HAL_MAX_DELAY);
 }
 
+void writeDataTFT_DMA_(TFT* tft, uint8_t* buff, size_t buff_size) {
+    HAL_GPIO_WritePin(TFT_A0_GPIO_Port, TFT_A0_Pin, GPIO_PIN_SET);
+    HAL_SPI_Transmit_DMA(tft->hspi, buff, buff_size);
+}
+
 uint16_t toColor565(uint8_t r, uint8_t g, uint8_t b) {
     return (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3));
 }

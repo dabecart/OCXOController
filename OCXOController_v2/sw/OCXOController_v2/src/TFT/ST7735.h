@@ -106,6 +106,7 @@ void unselectTFT_(TFT* tft);
 void resetTFT_(TFT* tft);
 void writeCommandTFT_(TFT* tft, uint8_t cmd);
 void writeDataTFT_(TFT* tft, uint8_t* buff, size_t buff_size);
+void writeDataTFT_DMA_(TFT* tft, uint8_t* buff, size_t buff_size);
 void displayInitTFT_(TFT* tft, const uint8_t *addr);
 void setAddressWindowTFT_(TFT* tft, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
 void writeCharTFT_(TFT* tft, uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color, uint16_t bgcolor);
