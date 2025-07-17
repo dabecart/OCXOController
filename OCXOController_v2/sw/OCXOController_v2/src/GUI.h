@@ -7,21 +7,26 @@
 #include "CORDIC/CORDIC.h"
 #include "Defines.h"
 
-#define GUI_REFRESH_PERIOD_ms 1000/GUI_FPS
+#define GUI_CHECKERBOARD_COLOR0 switched_color565(255,0,0)
+#define GUI_CHECKERBOARD_COLOR1 switched_color565(210,0,0)
+#define GUI_CHECKERBOARD_COLOR2 switched_color565(160,0,0)
 
-typedef struct GUI {
-    TFT tft;
-} GUI;
+typedef enum GUIState {
+    GUI_INITIALIZATION = 0,
+    GUI_MAIN = 1,
+} GUIState;
 
-uint8_t initGUI(GUI* gui, SPI_HandleTypeDef* hspi, DMA_HandleTypeDef* hdma_spi1_tx);
+uint8_t initGUI(SPI_HandleTypeDef* hspi, DMA_HandleTypeDef* hdma_spi1_tx, 
+                TIM_HandleTypeDef* guitim);
+void updateGUI();
+void setGUIState(GUIState state);
 
-uint8_t updateGUI(GUI* gui);
-
+void transferScreenToTFT();
+void transferToTFTEnded();
 
 void homeScreen_();
-void drawScreen_();
 
-void rippleDisplacement(uint16_t x, uint16_t y, float time, uint16_t* xout, uint16_t* yout);
+void rippleDisplacement(uint16_t x, uint16_t y, uint16_t r, uint16_t* xout, uint16_t* yout);
 uint16_t checkerboard(uint16_t x, uint16_t y, uint16_t color1, uint16_t color2);
 uint16_t rainbowGradient(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 void hsv2rgb(float H, float S, float V, uint8_t *r, uint8_t *g, uint8_t *b);

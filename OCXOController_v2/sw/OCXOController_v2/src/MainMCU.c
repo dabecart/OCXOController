@@ -5,8 +5,8 @@ MainHandlers hmain;
 void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, 
               SPI_HandleTypeDef* hspi1, DMA_HandleTypeDef* hdma_spi1_tx,
               TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, TIM_HandleTypeDef* htim3, 
-              TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim5, TIM_HandleTypeDef* htim8, 
-              TIM_HandleTypeDef* htim15, 
+              TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim5, TIM_HandleTypeDef* htim6, 
+              TIM_HandleTypeDef* htim8, TIM_HandleTypeDef* htim15, 
               UART_HandleTypeDef* huart2, 
               DMA_HandleTypeDef* hdma_usart2_rx, DMA_HandleTypeDef* hdma_usart2_tx,
               CORDIC_HandleTypeDef* hcordic) {
@@ -20,6 +20,7 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     hmain.htim3 = htim3; 
     hmain.htim4 = htim4; 
     hmain.htim5 = htim5; 
+    hmain.htim6 = htim6;
     hmain.htim8 = htim8; 
     hmain.htim15 = htim15; 
     hmain.huart2 = huart2; 
@@ -36,18 +37,18 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
         startupChecks &= startSTUSB4500(hi2c3);
     #endif
 
-    startupChecks &= initGUI(&hmain.gui, hspi1, hdma_spi1_tx);
+    startupChecks &= initGUI(hmain.hspi1, hmain.hdma_spi1_tx, hmain.htim6);
 
-    startupChecks &= initEEPROM(&hmain.eeprom, hi2c3, I2C_ADD_EEPROM);
+    startupChecks &= initEEPROM(&hmain.eeprom, hmain.hi2c3, I2C_ADD_EEPROM);
 
-    startupChecks &= initDigitalPot(&hmain.pot, hi2c1, I2C_ADD_POT);
+    startupChecks &= initDigitalPot(&hmain.pot, hmain.hi2c1, I2C_ADD_POT);
     startupChecks &= setVoltageDigitalPot(&hmain.pot, OCXO_MAX_VCO_VOLTAGE);
 
-    startupChecks &= initMCP4726_DAC(&hmain.dac, hi2c1, I2C_ADD_DAC);
+    startupChecks &= initMCP4726_DAC(&hmain.dac, hmain.hi2c1, I2C_ADD_DAC);
 
-    startupChecks &= initGPIOController(&hmain.gpio, hi2c3);
+    startupChecks &= initGPIOController(&hmain.gpio, hmain.hi2c3);
 
-    startupChecks &= initOCXOController(htim15, htim2, htim5);
+    startupChecks &= initOCXOController(hmain.htim15, hmain.htim2, hmain.htim5);
 
     if(!startupChecks) {
       errorTrapMain();
@@ -59,7 +60,10 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_3V3);
     setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_IN,   VOLTAGE_LEVEL_3V3);
 
-    HAL_TIM_OC_Start(htim1, TIM_CHANNEL_3);
+    HAL_TIM_OC_Start(hmain.htim1, TIM_CHANNEL_3);
+
+    // Set the final state of the GUI.
+    setGUIState(GUI_MAIN);
 }
 
 void loopMain() {
@@ -83,7 +87,12 @@ void loopMain() {
 
     updateGPIOController(&hmain.gpio);
 
-    updateGUI(&hmain.gui);
+    updateGUI();
+
+    // static uint32_t lastTimeHere = 0;
+    // if((HAL_GetTick() - lastTimeHere) < 100) return;
+    // lastTimeHere = HAL_GetTick();
+    // updateGUI();
 }
 
 void errorTrapMain() {

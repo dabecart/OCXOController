@@ -5,13 +5,13 @@ import numpy as np
 input_image_path = "C:/Users/Daniel/repos/OCXOController/OCXOController_v2/Logo/OCXOLogoForTFT_BW.png"
 
 def map_pixel_to_2bit(value):
-    if 0 <= value <= 10 :
+    if 0 <= value <= 36 :
         return 0b00
-    elif 121 <=value <= 123:
+    elif value <= 110:
         return 0b01
-    elif 194 <= value <= 196:
+    elif value <= 219:
         return 0b10
-    elif 253 <= value <= 255:
+    elif value <= 255:
         return 0b11
     else:
         raise ValueError("invalid color")

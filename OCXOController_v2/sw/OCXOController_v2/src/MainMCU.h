@@ -26,6 +26,7 @@ typedef struct MainHandlers {
     TIM_HandleTypeDef*  htim3;
     TIM_HandleTypeDef*  htim4;
     TIM_HandleTypeDef*  htim5;
+    TIM_HandleTypeDef*  htim6;  // GUI refresh interrupt.
     TIM_HandleTypeDef*  htim8;
     TIM_HandleTypeDef*  htim15;
     UART_HandleTypeDef* huart2;
@@ -34,7 +35,6 @@ typedef struct MainHandlers {
     CORDIC_HandleTypeDef* hcordic;
 
     GPIOController      gpio;
-    GUI                 gui;
     ExEEPROM            eeprom;
     MCP4531_DigitalPot  pot;
     MCP4726_DAC         dac;
@@ -43,8 +43,8 @@ typedef struct MainHandlers {
 void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, 
               SPI_HandleTypeDef* hspi1, DMA_HandleTypeDef* hdma_spi1_tx,
               TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, TIM_HandleTypeDef* htim3, 
-              TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim5, TIM_HandleTypeDef* htim8, 
-              TIM_HandleTypeDef* htim15, 
+              TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim5, TIM_HandleTypeDef* htim6,
+              TIM_HandleTypeDef* htim8, TIM_HandleTypeDef* htim15, 
               UART_HandleTypeDef* huart2, 
               DMA_HandleTypeDef* hdma_usart2_rx, DMA_HandleTypeDef* hdma_usart2_tx,
               CORDIC_HandleTypeDef* hcordic);
