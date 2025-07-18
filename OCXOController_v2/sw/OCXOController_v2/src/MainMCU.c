@@ -39,21 +39,58 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
 
     startupChecks &= initGUI(hmain.hspi1, hmain.hdma_spi1_tx, hmain.htim6);
 
-    startupChecks &= initEEPROM(&hmain.eeprom, hmain.hi2c3, I2C_ADD_EEPROM);
+    logMessage("EEPROM...");
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
 
+    startupChecks &= initEEPROM(&hmain.eeprom, hmain.hi2c3, I2C_ADD_EEPROM);
+    if(startupChecks) logMessage("EEPROM OK");
+    else{
+        logMessage("EEPROM ERROR");
+        errorTrapMain();
+    } 
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+
+    logMessage("DAC Vref...");
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
     startupChecks &= initDigitalPot(&hmain.pot, hmain.hi2c1, I2C_ADD_POT);
     startupChecks &= setVoltageDigitalPot(&hmain.pot, OCXO_MAX_VCO_VOLTAGE);
+    if(startupChecks) logMessage("DAC Vref OK");
+    else{
+        logMessage("DAC Vref ERROR");
+        errorTrapMain();
+    } 
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
 
+    logMessage("DAC...");
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
     startupChecks &= initMCP4726_DAC(&hmain.dac, hmain.hi2c1, I2C_ADD_DAC);
-
-    startupChecks &= initGPIOController(&hmain.gpio, hmain.hi2c3);
-
-    startupChecks &= initOCXOController(hmain.htim15, hmain.htim2, hmain.htim5);
-
-    if(!startupChecks) {
-      errorTrapMain();
+    if(startupChecks) logMessage("DAC OK");
+    else{
+        logMessage("DAC ERROR");
+        errorTrapMain();
     }
-    
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+
+    logMessage("GPIO...");
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+    startupChecks &= initGPIOController(&hmain.gpio, hmain.hi2c3);
+    if(startupChecks) logMessage("GPIO OK");
+    else{
+        logMessage("GPIO ERROR");
+        errorTrapMain();
+    } 
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+
+    logMessage("OCXO...");
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+    startupChecks &= initOCXOController(hmain.htim15, hmain.htim2, hmain.htim5);
+    if(startupChecks) logMessage("OCXO OK");
+    else{
+        logMessage("OCXO ERROR");
+        errorTrapMain();
+    } 
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+
     // Turn on the LED.
     HAL_GPIO_WritePin(TEST_LED_GPIO_Port, TEST_LED_Pin, 1);
 
@@ -62,8 +99,9 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
 
     HAL_TIM_OC_Start(hmain.htim1, TIM_CHANNEL_3);
 
-    // Set the final state of the GUI.
-    setGUIState(GUI_MAIN);
+    logMessage("Enjoy!");
+
+    requestScreenChange(SCREEN_MAIN);
 }
 
 void loopMain() {
@@ -87,6 +125,7 @@ void loopMain() {
 
     updateGPIOController(&hmain.gpio);
 
+    updateGUIInIRQ = 0;
     updateGUI();
 
     // static uint32_t lastTimeHere = 0;

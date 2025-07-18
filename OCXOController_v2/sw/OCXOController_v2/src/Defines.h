@@ -51,4 +51,11 @@
 
 // GUI
 
+// Based on the values set for TIM6.
+#define GUI_FPS 10
+
+// Let the logo be shown for this ammount of time.
+#define GUI_INITIAL_SCREEN_DELAY_ms 2000 
+#define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 400
+
 #endif // DEFINES_h

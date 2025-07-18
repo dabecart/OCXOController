@@ -15,6 +15,7 @@
 #include "DAC/MCP4726.h"
 #include "DigitalPot/MCP4531.h"
 #include "CORDIC/CORDIC.h"
+#include "commons/Logs.h"
 
 typedef struct MainHandlers {
     I2C_HandleTypeDef*  hi2c1; // OCXO I2C bus.

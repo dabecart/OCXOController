@@ -64,15 +64,16 @@
 #define ST7735_GMCTRP1 0xE0
 #define ST7735_GMCTRN1 0xE1
 
-// Color definitions
+// Color definitions in switched_color565.
 #define	TFT_BLACK   0x0000
-#define	TFT_BLUE    0x001F
-#define	TFT_RED     0xF800
-#define	TFT_GREEN   0x07E0
-#define TFT_CYAN    0x07FF
-#define TFT_MAGENTA 0xF81F
-#define TFT_YELLOW  0xFFE0
+#define	TFT_BLUE    0x1F00
+#define	TFT_RED     0x00F8
+#define	TFT_GREEN   0xE007
+#define TFT_CYAN    0xFF07
+#define TFT_MAGENTA 0x1FF8
+#define TFT_YELLOW  0xE0FF
 #define TFT_WHITE   0xFFFF
+
 #define color565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
 #define switched_color565(r, g, b) ((color565(r, g, b) << 8) | (color565(r, g, b) >> 8))&0xFFFF
 
@@ -95,11 +96,6 @@ typedef struct TFT {
 void initTFT(TFT* tft, SPI_HandleTypeDef* hspi, uint8_t rotation);
 void setDMATFT(TFT* tft, DMA_HandleTypeDef* hdma);
 void setRotationTFT(TFT* tft, uint8_t m);
-void drawPixelTFT(TFT* tft, uint16_t x, uint16_t y, uint16_t color);
-void writeStringTFT(TFT* tft, uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor);
-void fillRectangleTFT(TFT* tft, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
-void fillScreenTFT(TFT* tft, uint16_t color);
-void drawImageTFT(TFT* tft, uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data);
 void invertColorsTFT(TFT* tft, uint8_t invert);
 
 uint16_t toColor565(uint8_t r, uint8_t g, uint8_t b);
@@ -112,7 +108,6 @@ void writeDataTFT_(TFT* tft, uint8_t* buff, size_t buff_size);
 void writeDataTFT_DMA_(TFT* tft, uint8_t* buff, size_t buff_size);
 void displayInitTFT_(TFT* tft, const uint8_t *addr);
 void setAddressWindowTFT_(TFT* tft, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
-void writeCharTFT_(TFT* tft, uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color, uint16_t bgcolor);
 
 #endif // ST7735_h
 

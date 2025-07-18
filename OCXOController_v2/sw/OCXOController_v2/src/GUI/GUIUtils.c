@@ -1,5 +1,7 @@
 #include "GUIUtils.h"
 
+float guiTime = 0.0f;
+
 void hsv2rgb(float h, float s, float v, uint8_t *r, uint8_t *g, uint8_t *b) {
 	int i = floor(h * 6);
 	float f = h * 6 - i;
@@ -9,6 +11,7 @@ void hsv2rgb(float h, float s, float v, uint8_t *r, uint8_t *g, uint8_t *b) {
 	
     float rf, gf, bf;
     switch (i % 6) {
+        default:
         case 0: rf = v; gf = t; bf = p; break;
         case 1: rf = q; gf = v; bf = p; break;
         case 2: rf = p; gf = v; bf = t; break;
@@ -25,5 +28,18 @@ void hsv2rgb(float h, float s, float v, uint8_t *r, uint8_t *g, uint8_t *b) {
 void memset_u16(uint16_t *dst, uint16_t value, size_t count) {
     for (size_t i = 0; i < count; i++) {
         dst[i] = value;
+    }
+}
+
+void memsetDisplayBufferH(DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count) {
+    uint16_t* arr = (*buf)[y0] + x0;
+    for(uint16_t x = 0; x < count; x++) {
+        arr[x] = value;
+    }
+}
+
+void memsetDisplayBufferV(DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count) {
+    for(uint16_t y = y0; y < y0 + count; y++) {
+        (*buf)[y][x0] = value;
     }
 }
