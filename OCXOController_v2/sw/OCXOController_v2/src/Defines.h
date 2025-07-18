@@ -4,7 +4,7 @@
 // Do an initial check on the STUSB chip. If it fails, do not start the device.
 #define MCU_POWERED_EXTERNALLY 1
 
-#define PPS_TIMER_FREQ          160.0e6 // Hz
+#define PPS_TIMER_FREQ          170.0e6 // Hz
 #define PPS_REF_FREQ            1.0     // Hz
 #define OCXO_MAX_VCO_VOLTAGE    4.0     // Volts
 

@@ -62,13 +62,10 @@ void updateGUI() {
         if(transitionOverlay.halfAnimationDone) {
             // If half the animation is done, draw the current screen.
             updateDisplay |= screens[currentScreen]->draw(display);
+        }else {
+            // If the overlay has recently started, draw the previous screen.
+            updateDisplay |= screens[previousScreen]->draw(display);
         }
-        
-        // Freeze the screen.
-        // else {
-        //     // If the overlay has recently started, draw the previous screen.
-        //     updateDisplay |= screens[previousScreen]->draw(display);
-        // }
 
         // Draw the overlay over the screen.
         updateDisplay |= transitionOverlay.draw(&transitionOverlay, display);
