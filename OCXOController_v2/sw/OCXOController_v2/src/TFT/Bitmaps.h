@@ -3,11 +3,12 @@
 
 #include <stdint.h>
 
-#define LOGO_WIDTH 160
-#define LOGO_HEIGHT 78
+typedef struct Bitmap {
+    const uint8_t* buf;
+    uint16_t bufLen;
+    uint16_t width, height;
+} Bitmap;
 
-#define LOGO_LEN LOGO_WIDTH*LOGO_HEIGHT/8
-
-extern const uint16_t OCXOLogo[];
+extern const Bitmap OCXOLogo;
 
 #endif // BITMAPS_h

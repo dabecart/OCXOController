@@ -3,10 +3,11 @@
 uint16_t width = 0, height = 0;
 TFT tft;
 // With rotation taken into account, use [y][x] to access.
-uint16_t screen[ST7735_WIDTH][ST7735_HEIGHT]; 
+ScreenBuffer screen;
 
 float time = 0;
 GUIState state = GUI_INITIALIZATION;
+uint32_t drawTime = 0;
 
 volatile uint8_t screenReady = 0;
 volatile uint8_t transferInProgress = 0;
@@ -55,6 +56,7 @@ void updateGUI() {
 
     time = ((float) HAL_GetTick())/1000.0f;
     homeScreen_();
+    drawTime =  HAL_GetTick() - (uint32_t)(time*1000.0f);
 
     screenReady = 1;
 }
@@ -65,7 +67,7 @@ void setGUIState(GUIState inSt) {
 
 // Ripple distortion (adjust frequency, amplitude, and speed)
 const float rippleFrequency = 0.15f;
-const float rippleAmplitude = 5.0f;
+const float rippleAmplitude = 4.0f;
 const float rippleSpeed = 0.8f;
 // Ripple center (center of screen)
 const float cx = ST7735_HEIGHT / 2.0f;
@@ -158,33 +160,14 @@ void homeScreen_() {
 
     // Draws logo on top of the background.
 
-    // x0 and y0 coords to center the logo image in the screen.
-    uint16_t x0 = (width - LOGO_WIDTH) / 2;
-    uint16_t y0 = (height - LOGO_HEIGHT) / 2;
-
-    uint16_t currentBlock;
-    x = x0, y = y0;
-    for(int i = 0; i < LOGO_LEN; i++) {
-        // In an u16 there are 8 pixels.
-        currentBlock = OCXOLogo[i];
-        for(int j = 0; j < 8; j++) {
-            switch(currentBlock & 0b11) {
-                case 0b00:  screen[y][x] = TFT_BLACK;               break;  // Black contour.
-                case 0b01:  screen[y][x] = GUI_CHECKERBOARD_COLOR0; break;  // Countour.
-                case 0b10:  screen[y][x] = TFT_WHITE;               break;  // Fill.
-                case 0b11:  break; // This pixel belongs to the background.
-            }
-
-            // Go to the next pixel.
-            currentBlock >>= 2;
-            x++;
-            if(x >= (x0 + LOGO_WIDTH)) {
-                x = x0;
-                y++;
-            }
-        }
-    }
-
+    // x0 and yTemp coords to center the logo image in the screen.
+    int16_t x0 = (width - OCXOLogo.width) / 2;
+    // Little animation on the logo. It goes "up" on the screen when y0 < 0. If y0 >= 0, remains
+    // stationary.
+    int16_t y0 = sinCORDIC(PI / 4 * time)*2.1;
+    y0 = (height - OCXOLogo.height) / 2 + ((y0 < 0) ? y0 : 0);
+    setCurrentPalette(TFT_BLACK, GUI_CHECKERBOARD_COLOR0, TFT_WHITE, TRANSPARENT);
+    drawCompressedBitmap((Screen){width, height, &screen}, &OCXOLogo, x0, y0);
 }
 
 uint16_t rainbowGradient(uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
@@ -203,4 +186,3 @@ uint16_t rainbowGradient(uint16_t x, uint16_t y, uint16_t width, uint16_t height
 
     return toColor565(r, g, b);
 }
-

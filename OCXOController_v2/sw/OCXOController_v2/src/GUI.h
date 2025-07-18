@@ -2,10 +2,13 @@
 #define GUI_h
 
 #include "math.h"
+#include "stdlib.h"
+
 #include "TFT/ST7735.h"
 #include "TFT/Bitmaps.h"
 #include "CORDIC/CORDIC.h"
 #include "Defines.h"
+#include "GUI/DrawUtils.h"
 
 #define GUI_CHECKERBOARD_COLOR0 switched_color565(255,0,0)
 #define GUI_CHECKERBOARD_COLOR1 switched_color565(210,0,0)

@@ -20,9 +20,9 @@ float sinCORDIC(float x);
 float cosCORDIC(float x);
 float sqrtCORDIC(float x);
 
-int32_t floatToQ31(float x);
-float Q31ToFloat(int32_t x);
 int16_t floatToQ15(float x);
 float Q15ToFloat(int16_t x);
+
+float normalizeAngle(float theta);
 
 #endif // CORDIC_h

@@ -24,15 +24,15 @@ float sinCORDIC(float x) {
     MODIFY_REG(cordic->Instance->CSR, CORDIC_CSR_FUNC, CORDIC_FUNCTION_SINE);
 
     uint8_t in_q15[sizeof(uint32_t)] = {0}, out_q15[sizeof(uint32_t)] = {0};
-    // Arg1: Angle in radians, normalized by pi.
-    *((uint16_t*) in_q15) = floatToQ15(fmod(x, PI) / PI);
+    // Arg1: Angle in radians, between [-pi, pi], normalized by pi.
+    *((int16_t*) in_q15) = floatToQ15(normalizeAngle(x));
     // Arg2: modulus (set to 1).
-    *((uint16_t*) (in_q15+2)) = 0x7FFF;
+    *((int16_t*) (in_q15+2)) = 0x7FFF;
 
     cordic->Instance->WDATA = *((uint32_t*) in_q15);
     *((uint32_t*) out_q15) = cordic->Instance->RDATA;
     
-    return Q15ToFloat(*((uint16_t*) out_q15));
+    return Q15ToFloat(*((int16_t*) out_q15));
 }
 
 float cosCORDIC(float x) {
@@ -40,14 +40,14 @@ float cosCORDIC(float x) {
 
     uint8_t in_q15[sizeof(uint32_t)] = {0}, out_q15[sizeof(uint32_t)] = {0};
     // Arg1: Angle in radians, normalized by pi.
-    *((uint16_t*) in_q15) = floatToQ15(fmod(x, PI) / PI);
+    *((int16_t*) in_q15) = floatToQ15(normalizeAngle(x));
     // Arg2: modulus (set to 1).
-    *((uint16_t*) (in_q15+2)) = 0x7FFF;
+    *((int16_t*) (in_q15+2)) = 0x7FFF;
 
     cordic->Instance->WDATA = *((uint32_t*) in_q15);
     *((uint32_t*) out_q15) = cordic->Instance->RDATA;
 
-    return Q15ToFloat(*((uint16_t*) out_q15));
+    return Q15ToFloat(*((int16_t*) out_q15));
 }
 
 float sqrtCORDIC(float x) {
@@ -71,13 +71,13 @@ float sqrtCORDIC(float x) {
 
     uint8_t in_q15[sizeof(uint32_t)] = {0}, out_q15[sizeof(uint32_t)] = {0};
     // Arg1: x.
-    *((uint16_t*) in_q15) = floatToQ15(x_scaled);
+    *((int16_t*) in_q15) = floatToQ15(x_scaled);
     // Arg2: none.
 
     cordic->Instance->WDATA = *((uint32_t*) in_q15);
     *((uint32_t*) out_q15) = cordic->Instance->RDATA;
 
-    float out = Q15ToFloat(*((uint16_t*) out_q15));
+    float out = Q15ToFloat(*((int16_t*) out_q15));
 
     if(rescaled) {
         out *= 2.0f;
@@ -101,6 +101,12 @@ int16_t floatToQ15(float x) {
 
 float Q15ToFloat(int16_t x) {
     return (float)(x) / 32768.0f;
+}
+
+float normalizeAngle(float theta) {
+    theta = fmod(theta + PI, 2.0 * PI);
+    if (theta < 0) theta += 2.0 * PI;
+    return (theta - PI) / PI;
 }
 
 #endif
