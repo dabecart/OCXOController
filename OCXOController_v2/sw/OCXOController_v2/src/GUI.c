@@ -87,30 +87,33 @@ inline void rippleDisplacement(uint16_t x, uint16_t y, uint16_t r, uint16_t* xou
     *yout = y + r * rippleScale;
 }
 
-inline uint16_t checkerboard(uint16_t x, uint16_t y, uint16_t color1, uint16_t color2) {
+inline uint16_t checkerboard(int16_t x, int16_t y, uint16_t color1, uint16_t color2) {
     // const uint16_t cellSize = 16;
     // return ((((x / cellSize) + (y / cellSize)) & 0x01) == 0) ? color1 : color2;
-    return ((((x >> 4) + (y >> 4)) & 0x0001) == 1) ? color1 : color2;
+
+    // The +10 is to generate the pattern for negative values of x and y. It's a cheap fix but it 
+    // works :)
+    return (((((x+10) >> 4) + ((y+10) >> 4)) & 0x0001) == 1) ? color1 : color2;
 }
 
 uint8_t isOnScreen(int16_t x, int16_t y) {
     return (x >= 0) && (y >= 0) && (x < width) && (y < height);
 }
 
-void displacedCheckerboard(int16_t x, int16_t y, int16_t r) {
+void displacedCheckerboard(int16_t x, int16_t y, int16_t r, int16_t dithX, int16_t dithY) {
     if(!isOnScreen(x,y)) return;
 
     uint16_t xx = x, yy = y;
     rippleDisplacement(xx, yy, r, &xx, &yy);
     
-    screen[y][x] = checkerboard(xx, yy, GUI_CHECKERBOARD_COLOR1, GUI_CHECKERBOARD_COLOR2);
+    uint16_t pixel = checkerboard(xx, yy, GUI_CHECKERBOARD_COLOR1, GUI_CHECKERBOARD_COLOR2);
+    screen[y][x] = pixel; 
 
     // The midpoint center algorithm cannot fill all points on the screen. To fill those
-    // points draw the circle line a little thicker by drawing the diagonals too.
-    // if(isOnScreen(x+1, y+1)) screen[y+1][x+1] = pixel;
-    // if(isOnScreen(x-1, y+1)) screen[y+1][x-1] = pixel;
-    // if(isOnScreen(x-1, y-1)) screen[y-1][x-1] = pixel;
-    // if(isOnScreen(x+1, y-1)) screen[y-1][x+1] = pixel;
+    // points draw the circle line a little thicker by drawing two extra pixels on the dithering 
+    // direction.
+    if(isOnScreen(x+dithX, y+dithY)) screen[y+dithY][x+dithX] = pixel;
+    if(isOnScreen(x-dithX, y-dithY)) screen[y-dithY][x-dithX] = pixel;
 }
 
 void homeScreen_() {
@@ -132,25 +135,16 @@ void homeScreen_() {
         while(x >= y) {
             // (x,y) is in the first octant and belongs to the circle. Replicate on the other 
             // octants to get the full circle.
-            displacedCheckerboard(cx + x, cy + y, r);
-            displacedCheckerboard(cx + y, cy + x, r);
-            displacedCheckerboard(cx + y, cy - x, r);
-            displacedCheckerboard(cx - x, cy + y, r);
-            displacedCheckerboard(cx - x, cy - y, r);
-            displacedCheckerboard(cx - y, cy - x, r);
-            displacedCheckerboard(cx - y, cy + x, r);
-            displacedCheckerboard(cx + x, cy - y, r);
-
-            // Fill the empty spaces left by the midpoint circle algorithm. Fill the pixels that are
-            // outside the diagonal in radial direction.
-            displacedCheckerboard(cx + x + 1,  cy + y + 1, r);
-            displacedCheckerboard(cx + y + 1,  cy + x + 1, r);
-            displacedCheckerboard(cx + y - 1,  cy - x + 1, r);
-            displacedCheckerboard(cx - x - 1,  cy + y + 1, r);
-            displacedCheckerboard(cx - x - 1,  cy - y - 1, r);
-            displacedCheckerboard(cx - y - 1,  cy - x - 1, r);
-            displacedCheckerboard(cx - y + 1,  cy + x - 1, r);
-            displacedCheckerboard(cx + x + 1,  cy - y - 1, r);
+            // Fill the empty spaces left by the midpoint circle algorithm. These are in radial 
+            // direction, outside the circle.
+            displacedCheckerboard(cx + x, cy + y, r,  1,  1);
+            displacedCheckerboard(cx + y, cy + x, r,  1,  1);
+            displacedCheckerboard(cx + y, cy - x, r, -1,  1);
+            displacedCheckerboard(cx - x, cy + y, r, -1,  1);
+            displacedCheckerboard(cx - x, cy - y, r, -1, -1);
+            displacedCheckerboard(cx - y, cy - x, r, -1, -1);
+            displacedCheckerboard(cx - y, cy + x, r,  1, -1);
+            displacedCheckerboard(cx + x, cy - y, r,  1, -1);
 
             y++;
             t1 += y;
@@ -210,24 +204,3 @@ uint16_t rainbowGradient(uint16_t x, uint16_t y, uint16_t width, uint16_t height
     return toColor565(r, g, b);
 }
 
-void hsv2rgb(float h, float s, float v, uint8_t *r, uint8_t *g, uint8_t *b) {
-	int i = floor(h * 6);
-	float f = h * 6 - i;
-	float p = v * (1 - s);
-	float q = v * (1 - f * s);
-	float t = v * (1 - (1 - f) * s);
-	
-    float rf, gf, bf;
-    switch (i % 6) {
-        case 0: rf = v; gf = t; bf = p; break;
-        case 1: rf = q; gf = v; bf = p; break;
-        case 2: rf = p; gf = v; bf = t; break;
-        case 3: rf = p; gf = q; bf = v; break;
-        case 4: rf = t; gf = p; bf = v; break;
-        case 5: rf = v; gf = p; bf = q; break;
-    }
-
-    *r = (uint8_t)(rf * 255.0f);
-    *g = (uint8_t)(gf * 255.0f);
-    *b = (uint8_t)(bf * 255.0f);
-}

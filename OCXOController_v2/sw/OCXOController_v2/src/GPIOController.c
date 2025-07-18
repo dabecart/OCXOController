@@ -444,7 +444,7 @@ uint8_t initialAnimationGPIOController_(GPIOController* hgpio) {
     for(uint8_t button = BUTTON_1; button <= BUTTON_4; button++) {
         for(uint8_t colorIndex = 0; colorIndex < sizeof(colors)/sizeof(ButtonColor); colorIndex++) {
             state &= setButtonColor(hgpio, (Button) button, colors[colorIndex]);
-            HAL_Delay(80); // This delay is "delayed" by the initial GUI animation IRQ.
+            HAL_Delay(80); // This delay is "stretched" by the initial GUI animation IRQ.
         }
     }
     return state;

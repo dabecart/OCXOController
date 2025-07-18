@@ -15,7 +15,8 @@
         "usbcomms.h": "c",
         "math.h": "c",
         "cordic.h": "c",
-        "bitmaps.h": "c"
+        "bitmaps.h": "c",
+        "tca6416.h": "c"
     },
     "cSpell.words": [
         "OCXO"

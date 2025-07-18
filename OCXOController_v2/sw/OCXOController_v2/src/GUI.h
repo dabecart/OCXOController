@@ -27,7 +27,7 @@ void transferToTFTEnded();
 void homeScreen_();
 
 void rippleDisplacement(uint16_t x, uint16_t y, uint16_t r, uint16_t* xout, uint16_t* yout);
-uint16_t checkerboard(uint16_t x, uint16_t y, uint16_t color1, uint16_t color2);
+uint16_t checkerboard(int16_t x, int16_t y, uint16_t color1, uint16_t color2);
 uint16_t rainbowGradient(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 void hsv2rgb(float H, float S, float V, uint8_t *r, uint8_t *g, uint8_t *b);
 
