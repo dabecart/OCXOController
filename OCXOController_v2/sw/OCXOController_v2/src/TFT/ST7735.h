@@ -99,6 +99,7 @@ void setRotationTFT(TFT* tft, uint8_t m);
 void invertColorsTFT(TFT* tft, uint8_t invert);
 
 uint16_t toColor565(uint8_t r, uint8_t g, uint8_t b);
+uint16_t toColor565Reversed(uint8_t r, uint8_t g, uint8_t b);
 
 void selectTFT_(TFT* tft);
 void unselectTFT_(TFT* tft);

@@ -193,7 +193,8 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-
+    // Do not increment the tick during initialization. This will be done by the GUI timer.
+    if(hmain.doingInitialization) return;
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */

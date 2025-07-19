@@ -14,6 +14,7 @@ typedef enum ScreenID {
 typedef struct Screen {
     ScreenID id;
     
+    void (*initScreen)();
     // Returns 1 if the frame is to be redrawn.
     uint8_t (*draw)(Display);
     void (*updateInput)();

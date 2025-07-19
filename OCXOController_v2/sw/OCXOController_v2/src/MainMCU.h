@@ -16,6 +16,7 @@
 #include "DigitalPot/MCP4531.h"
 #include "CORDIC/CORDIC.h"
 #include "commons/Logs.h"
+#include "OCXOChannels.h"
 
 typedef struct MainHandlers {
     I2C_HandleTypeDef*  hi2c1; // OCXO I2C bus.
@@ -35,10 +36,14 @@ typedef struct MainHandlers {
     DMA_HandleTypeDef*  hdma_usart2_tx;
     CORDIC_HandleTypeDef* hcordic;
 
+    uint8_t doingInitialization;
+    uint8_t initialized;
+
     GPIOController      gpio;
     ExEEPROM            eeprom;
     MCP4531_DigitalPot  pot;
     MCP4726_DAC         dac;
+    OCXOChannels        chOuts;
 } MainHandlers;
 
 void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3, 

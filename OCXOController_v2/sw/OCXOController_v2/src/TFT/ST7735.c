@@ -179,6 +179,10 @@ uint16_t toColor565(uint8_t r, uint8_t g, uint8_t b) {
     return (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3));
 }
 
+uint16_t toColor565Reversed(uint8_t r, uint8_t g, uint8_t b) {
+    return ((toColor565(r, g, b) << 8) | (toColor565(r, g, b) >> 8));
+}
+
 void displayInitTFT_(TFT* tft, const uint8_t *addr) {
     uint8_t numCommands, numArgs;
     uint16_t ms;

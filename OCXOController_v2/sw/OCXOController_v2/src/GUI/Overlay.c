@@ -1,8 +1,8 @@
 #include "Overlay.h"
 
 const int16_t barWidth = 10;
-const float sweepTime = 2.0f;
-const uint16_t animationColor = TFT_YELLOW;
+const float sweepTime = 1.5f;
+const uint16_t animationColor = switched_color565(200,0,0);
 
 // The displacement = a*t^2. At t = sweepTime, the displacement should be the width of the TFT,
 // therefore the "a" factor should be:

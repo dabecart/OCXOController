@@ -32,16 +32,27 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
 
     uint8_t startupChecks = 1;
 
+    startupChecks &= initGUI(hmain.hspi1, hmain.hdma_spi1_tx, hmain.htim6);
+    // Once the GUI has started and its timer is working, set this to initialization. This will make
+    // the "tick" of the STM32 be calculated from the IRQ of the GUI instead of the SysTick_Handler.
+    hmain.doingInitialization = 1;
+    hmain.initialized = 0;
+
     // Configure the PD (Power Delivery) chip.
     #if !MCU_POWERED_EXTERNALLY
+        logMessage("USB-C...");
+        HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
         startupChecks &= startSTUSB4500(hi2c3);
+        if(startupChecks) logMessage("USB-C OK");
+        else{
+            logMessage("USB-C ERROR");
+            errorTrapMain();
+        } 
+        HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
     #endif
-
-    startupChecks &= initGUI(hmain.hspi1, hmain.hdma_spi1_tx, hmain.htim6);
 
     logMessage("EEPROM...");
     HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
-
     startupChecks &= initEEPROM(&hmain.eeprom, hmain.hi2c3, I2C_ADD_EEPROM);
     if(startupChecks) logMessage("EEPROM OK");
     else{
@@ -91,6 +102,16 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     } 
     HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
 
+    logMessage("Channels...");
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+    startupChecks &= initOCXOChannels(&hmain.chOuts);
+    if(startupChecks) logMessage("Channels OK");
+    else{
+        logMessage("Channels ERROR");
+        errorTrapMain();
+    } 
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+
     // Turn on the LED.
     HAL_GPIO_WritePin(TEST_LED_GPIO_Port, TEST_LED_Pin, 1);
 
@@ -101,7 +122,11 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
 
     logMessage("Enjoy!");
 
+    updateGUIInIRQ = 0;
     requestScreenChange(SCREEN_MAIN);
+    
+    hmain.initialized = 1;
+    hmain.doingInitialization = 0;
 }
 
 void loopMain() {
@@ -125,7 +150,6 @@ void loopMain() {
 
     updateGPIOController(&hmain.gpio);
 
-    updateGUIInIRQ = 0;
     updateGUI();
 
     // static uint32_t lastTimeHere = 0;

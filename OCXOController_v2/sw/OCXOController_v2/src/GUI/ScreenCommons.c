@@ -43,10 +43,6 @@ uint16_t checkerboard(int16_t x, int16_t y, uint16_t color1, uint16_t color2) {
     return (((((x+10) >> 4) + ((y+10) >> 4)) & 0x0001) == 1) ? color1 : color2;
 }
 
-uint8_t isOnDisplay(Display d, int16_t x, int16_t y) {
-    return (x >= 0) && (y >= 0) && (x < d.width) && (y < d.height);
-}
-
 void displacedCheckerboard(Display d, int16_t x, int16_t y, int16_t r, int16_t dithX, int16_t dithY) {
     if(!isOnDisplay(d,x,y)) return;
 

@@ -18,7 +18,8 @@
         "bitmaps.h": "c",
         "tca6416.h": "c",
         "screen.h": "c",
-        "drawutils.h": "c"
+        "drawutils.h": "c",
+        "mainmcu.h": "c"
     },
     "cSpell.words": [
         "OCXO"

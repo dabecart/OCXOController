@@ -1,4 +1,5 @@
 #include "GUI.h"
+#include "MainMCU.h"
 
 TFT tft;
 TIM_HandleTypeDef* GUI_TIM;
@@ -11,8 +12,8 @@ Display display;
 uint32_t drawTime = 0;
 
 // GUI state machine and variables.
-ScreenID currentScreen = SCREEN_INTRO;
-ScreenID previousScreen = SCREEN_INTRO;
+ScreenID currentScreen = GUI_INITIAL_SCREEN;
+ScreenID previousScreen = GUI_INITIAL_SCREEN;
 Overlay transitionOverlay;
 uint8_t currentlyTransitioning = 0;
 uint8_t updateGUIInIRQ = 1;
@@ -39,6 +40,8 @@ uint8_t initGUI(SPI_HandleTypeDef* hspi, DMA_HandleTypeDef* hdma_spi, TIM_Handle
 
     // Start the display manager.
     initScreens();
+    // Init variables of the initial screen.
+    screens[currentScreen]->initScreen();
 
     // This timer is in charge of generating an IRQ to send the display buffer to the TFT display 
     // using DMA. This is only done if the display array is ready to be printed.
@@ -83,23 +86,34 @@ void updateGUI() {
 
     // A drawing call was missed! By resetting the TIM it will retrigger the DMA transfer and the 
     // program will catch up with the TIM.
-    if(missedDrawCall) {
+    if(missedDrawCall && hmain.initialized) {
         missedDrawCall = 0;
         __HAL_TIM_SET_COUNTER(GUI_TIM, 0);
     }
 }
 
 void requestScreenChange(ScreenID nextScreen) {
+    if(nextScreen == currentScreen || currentlyTransitioning) return;
+
     previousScreen = currentScreen;
     currentScreen = nextScreen;
+
+    screens[currentScreen]->initScreen();
 
     currentlyTransitioning = 
         createOverlay(&transitionOverlay, OVERLAY_CURTAIN_SWEEP_IN_LEFT_OUT_LEFT);
 }
 
 void transferScreenToTFT() {
-    // Ignore until the updateGUI() catches up and resets the TIM.
-    if(missedDrawCall) return;
+    // Called when the GUI TIM restarts.
+    
+    // The GUI timer will be in charge of incrementing the ticks as it has higher priority than the 
+    // SysTick_Handler.
+    if(hmain.doingInitialization) uwTick += 1000.0f / GUI_FPS;
+
+    // Ignore until the updateGUI() catches up and resets the TIM. Only do this when not in 
+    // initialization.
+    if(hmain.initialized && missedDrawCall) return;
 
     // Update the display during the initialization process inside the TIM IRQ.
     if(updateGUIInIRQ) updateGUI();
@@ -119,5 +133,6 @@ void transferScreenToTFT() {
 }
 
 void transferToTFTEnded() {
+    // Called when DMA is done.
     transferInProgress = 0;
 }

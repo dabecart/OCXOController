@@ -37,7 +37,7 @@ void clippedMemsetH(Display display, int16_t x, int16_t y, uint16_t color, uint1
 
     if(x < 0) {
         if(endX >= display.width)    count = display.width;
-        else                        count += x;
+        else                         count += x;
         // Start drawing from x = 0.
         x = 0;
     }else {
@@ -112,23 +112,27 @@ void fillWindowV(Display display, uint16_t color, uint16_t count) {
     pwCurrentY += count;
 }
 
+uint8_t isOnDisplay(Display d, int16_t x, int16_t y) {
+    return (x >= 0) && (y >= 0) && (x < d.width) && (y < d.height);
+}
+
 void transformOrigin(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t* xout, int16_t* yout) {
     switch (origin & 0x0F) {
         default:
-        case ORIGIN_LEFT:   *xout = x0;         break;
+        case ORIGIN_LEFT:   *xout = x0;       break;
 
-        case ORIGIN_MIDDLE: *xout = x0 - w/2;   break;
+        case ORIGIN_MIDDLE: *xout = x0 - w/2; break;
 
-        case ORIGIN_RIGHT:  *xout = x0 + w/2;   break;
+        case ORIGIN_RIGHT:  *xout = x0 - w;   break;
     }
 
     switch (origin & 0xF0) {
         default:
-        case ORIGIN_TOP:    *yout = y0;         break;
+        case ORIGIN_TOP:    *yout = y0;       break;
 
-        case ORIGIN_CENTER: *yout = y0 - h/2;   break;
+        case ORIGIN_CENTER: *yout = y0 - h/2; break;
 
-        case ORIGIN_RIGHT:  *yout = y0 + h/2;   break;
+        case ORIGIN_RIGHT:  *yout = y0 - h;   break;
     }
 }
 
@@ -144,11 +148,15 @@ void fillRectangle(Display display, int16_t x, int16_t y, int16_t w, int16_t h, 
 }
 
 void drawLineH(Display display, int16_t x, int16_t y, int16_t length, uint16_t color) {
+    if(y < 0 || y >= display.height) return;
+
     setPlottingWindow(display, x, y, length, 1);
     fillWindowH(display, color, length);
 }
 
 void drawLineV(Display display, int16_t x, int16_t y, int16_t length, uint16_t color) {
+    if(x < 0 || x >= display.width) return;
+
     setPlottingWindow(display, x, y, 1, length);
     fillWindowV(display, color, length);
 }
@@ -216,13 +224,15 @@ void drawLine(Display display, int16_t x0, int16_t y0, int16_t x1, int16_t y1, u
 }
 
 void drawChar(Display display, char ch, FontDef font, int16_t x0, int16_t y0) {
+    if(ch <= ' ') return;
+    
     setPlottingWindow(display, x0, y0, font.width, font.height);
 
     for(uint16_t i = 0; i < font.height; i++) {
-        uint16_t b = font.data[(ch - 32) * font.height + i];
-        for(uint16_t j = 0; j < font.width; j++) {
+        uint8_t b = font.data[(ch - FONTS_ASCII_OFFSET) * font.height + i];
+        for(uint8_t j = 0; j < font.width; j++) {
             // If the bit is 1, use the primary color of the palette [0].
-            fillWindowH(display, palette[(b & 0x8000) == 0], 1);
+            fillWindowH(display, palette[(b & 0x80) == 0], 1);
             b <<= 1;
         }
     }

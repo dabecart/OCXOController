@@ -24,6 +24,11 @@ typedef enum VoltageLevel {
     VOLTAGE_LEVEL_1V8   = 0b11,
 } VoltageLevel;
 
+#define IS_VOLTAGE_LEVEL(x) ((x == VOLTAGE_LEVEL_OFF)  || \
+                             (x == VOLTAGE_LEVEL_5V)   || \
+                             (x == VOLTAGE_LEVEL_3V3)  || \
+                             (x == VOLTAGE_LEVEL_1V8))
+
 typedef enum Button {
     BUTTON_1 = 1,
     BUTTON_2,

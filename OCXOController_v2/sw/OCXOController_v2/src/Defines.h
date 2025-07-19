@@ -57,5 +57,6 @@
 // Let the logo be shown for this ammount of time.
 #define GUI_INITIAL_SCREEN_DELAY_ms 2000 
 #define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 400
+#define GUI_INITIAL_SCREEN SCREEN_MAIN
 
 #endif // DEFINES_h

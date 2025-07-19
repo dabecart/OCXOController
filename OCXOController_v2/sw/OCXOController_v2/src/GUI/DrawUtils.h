@@ -31,6 +31,7 @@ void drawLineV(Display display, int16_t x, int16_t y, int16_t length, uint16_t c
 void drawLine(Display display, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
 void drawCompressedBitmap(Display display, const Bitmap* img, int16_t x, int16_t y);
 void drawString(Display display, const char* str, FontDef font, int16_t x0, int16_t y0); 
+uint8_t isOnDisplay(Display d, int16_t x, int16_t y);
 
 void setCurrentPalette(uint16_t c00, uint16_t c01, uint16_t c10, uint16_t c11);
 void setCurrentOrigin(uint8_t origin);
