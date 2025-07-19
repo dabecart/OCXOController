@@ -1,5 +1,6 @@
 #include "GUI/Screen.h"
 #include "MainMCU.h"
+#include "GUI/Bitmaps.h"
 
 const float backgroundValue1 = 0.82;
 const float backgroundValue2 = 0.63;
@@ -84,6 +85,11 @@ uint8_t mainScreen_draw(Display d) {
 
     // Draw background.
     checkerboardBackground(d, guiTime);
+
+    // Draw small logo.
+    setCurrentOrigin(ORIGIN_LEFT | ORIGIN_TOP);
+    setCurrentPalette(TFT_BLACK, TRANSPARENT, TFT_WHITE, TRANSPARENT);
+    drawBitmap(d, &miniOCXOLogo, 106, 4);
 
     // Menu boxes.
     drawChannelBox(d, &hmain.chOuts.ch1, 15, 25);

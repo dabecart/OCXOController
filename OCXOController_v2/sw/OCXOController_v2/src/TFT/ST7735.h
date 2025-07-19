@@ -2,7 +2,6 @@
 #define ST7735_h
 
 #include "stm32g4xx_hal.h"
-#include "Fonts.h"
 
 /****** TFT DEFINES ******/
 #define ST7735_WIDTH  128

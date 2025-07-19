@@ -20,7 +20,7 @@ void setPlottingWindow(Display display, int16_t x, int16_t y, int16_t width, int
 // This function works supposing this memset is for a horizontal line on the display.
 void clippedMemsetH(Display display, int16_t x, int16_t y, uint16_t color, uint16_t count) {
     // No need to plot the transparent areas.
-    if(color == TRANSPARENT) return;
+    if(color == TRANSPARENT || count == 0) return;
 
     // Check if the line is inside the display on the vertical axis. 
     if((y < 0) || (y >= display.height)) return;
@@ -49,7 +49,7 @@ void clippedMemsetH(Display display, int16_t x, int16_t y, uint16_t color, uint1
 
 void clippedMemsetV(Display display, int16_t x, int16_t y, uint16_t color, uint16_t count) {
     // No need to plot the transparent areas.
-    if(color == TRANSPARENT) return;
+    if(color == TRANSPARENT || count == 0) return;
 
     // Check if the line is inside the display on the horizontal axis. 
     if((x < 0) || (x >= display.width)) return;
@@ -238,17 +238,40 @@ void drawChar(Display display, char ch, FontDef font, int16_t x0, int16_t y0) {
     }
 }
 
-void drawCompressedBitmap(Display display, const Bitmap* img, int16_t x0, int16_t y0) {
-    int16_t x, y;
-    transformOrigin(x0, y0, img->width, img->height, &x, &y);
-
-    setPlottingWindow(display, x, y, img->width, img->height);
-
-    for(const uint8_t* chunk = img->buf; chunk < img->buf + img->bufLen; chunk++) {
+void drawCompressedBitmap_(Display display, const Bitmap* img) {
+    for(const uint8_t* chunk = img->buf; chunk < img->buf + img->byteLen; chunk++) {
         // color = palette[(*chunk) >> 6];
         // pixelCount = ((*chunk) & 0x3F) + 1;
         fillWindowH(display, palette[(*chunk) >> 6], ((*chunk) & 0x3F) + 1);
     }
+}
+
+void drawPaletteBitmap_(Display display, const Bitmap* img) {
+    uint16_t currentBlock;
+    for(uint16_t* blockPointer = (uint16_t*) img->buf; 
+        blockPointer < ((uint16_t*) img->buf) + (img->byteLen/sizeof(uint16_t));
+        blockPointer++) {
+        
+        // In an u16 there are 8 pixels.
+        currentBlock = *blockPointer;
+        for(int j = 0; j < 8; j++) {
+            fillWindowH(display, palette[currentBlock & 0b11], 1);
+            // Go to the next pixel.
+            currentBlock >>= 2;
+        }
+    }
+}
+
+void drawBitmap(Display display, const Bitmap* img, int16_t x0, int16_t y0) {
+    int16_t x, y;
+    transformOrigin(x0, y0, img->width, img->height, &x, &y);
+    setPlottingWindow(display, x, y, img->width, img->height);
+
+    switch (img->compressed) {
+        case BITMAP_COMPRESSED:     drawCompressedBitmap_(display, img);    break;
+        case BITMAP_PALETTE:        drawPaletteBitmap_(display, img);       break;
+        default:                    break;
+    }   
 }
 
 void drawString(Display display, const char* str, FontDef font, int16_t x0, int16_t y0) {

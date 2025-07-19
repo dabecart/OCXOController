@@ -312,5 +312,8 @@ const uint16_t miniOCXOLogoBuf[] = {
     0xAAAA, 0xF2AA, 0x003F, 0x0000, 0x0000, 0x3F00, 0x0000, 0xFC00, 
 };
 
-const Bitmap OCXOLogo = {OCXOLogoBuf, sizeof(OCXOLogoBuf), 160, 78, BITMAP_COMPRESSED};
-const Bitmap miniOCXOLogo = {miniOCXOLogoBuf, sizeof(OCXOLogoBuf), 48, 16, BITMAP_NOT_COMPRESSED};
+const Bitmap OCXOLogo = {OCXOLogoBuf, sizeof(OCXOLogoBuf), 
+                         160, 78, BITMAP_COMPRESSED};
+
+const Bitmap miniOCXOLogo = {(const uint8_t*) miniOCXOLogoBuf, sizeof(miniOCXOLogoBuf), 
+                             48, 16, BITMAP_PALETTE};

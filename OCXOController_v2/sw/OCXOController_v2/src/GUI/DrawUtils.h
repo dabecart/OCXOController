@@ -6,7 +6,8 @@
 #include <stddef.h>
 #include <string.h>
 #include "GUIUtils.h"
-#include "TFT/Bitmaps.h"
+#include "Bitmaps.h"
+#include "Fonts.h"
 
 #define TRANSPARENT 0x0821 // The darkest gray that is not black in 565.
 
@@ -29,7 +30,7 @@ void fillRectangle(Display display, int16_t x, int16_t y, int16_t w, int16_t h, 
 void drawLineH(Display display, int16_t x, int16_t y, int16_t length, uint16_t color);
 void drawLineV(Display display, int16_t x, int16_t y, int16_t length, uint16_t color);
 void drawLine(Display display, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
-void drawCompressedBitmap(Display display, const Bitmap* img, int16_t x, int16_t y);
+void drawBitmap(Display display, const Bitmap* img, int16_t x, int16_t y);
 void drawString(Display display, const char* str, FontDef font, int16_t x0, int16_t y0); 
 uint8_t isOnDisplay(Display d, int16_t x, int16_t y);
 
