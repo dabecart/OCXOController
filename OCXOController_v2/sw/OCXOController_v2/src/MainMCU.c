@@ -6,7 +6,7 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
               SPI_HandleTypeDef* hspi1, DMA_HandleTypeDef* hdma_spi1_tx,
               TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, TIM_HandleTypeDef* htim3, 
               TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim5, TIM_HandleTypeDef* htim6, 
-              TIM_HandleTypeDef* htim8, TIM_HandleTypeDef* htim15, 
+              TIM_HandleTypeDef* htim7, TIM_HandleTypeDef* htim8, TIM_HandleTypeDef* htim15, 
               UART_HandleTypeDef* huart2, 
               DMA_HandleTypeDef* hdma_usart2_rx, DMA_HandleTypeDef* hdma_usart2_tx,
               CORDIC_HandleTypeDef* hcordic) {
@@ -21,6 +21,7 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     hmain.htim4 = htim4; 
     hmain.htim5 = htim5; 
     hmain.htim6 = htim6;
+    hmain.htim7 = htim7;
     hmain.htim8 = htim8; 
     hmain.htim15 = htim15; 
     hmain.huart2 = huart2; 
@@ -32,11 +33,14 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
 
     uint8_t startupChecks = 1;
 
-    startupChecks &= initGUI(hmain.hspi1, hmain.hdma_spi1_tx, hmain.htim6);
+    startupChecks &= initGUI(hmain.hspi1, hmain.htim6);
     // Once the GUI has started and its timer is working, set this to initialization. This will make
     // the "tick" of the STM32 be calculated from the IRQ of the GUI instead of the SysTick_Handler.
     hmain.doingInitialization = 1;
     hmain.initialized = 0;
+
+    // Take some time of the initialization to show the logo.
+    HAL_Delay(GUI_INITIAL_SCREEN_DELAY_ms);
 
     // Configure the PD (Power Delivery) chip.
     #if !MCU_POWERED_EXTERNALLY
@@ -85,6 +89,8 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     logMessage("GPIO...");
     HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
     startupChecks &= initGPIOController(&hmain.gpio, hmain.hi2c3);
+    // The timer + DMA + I2C is not working and causes glitches on the screen.
+    // startupChecks &= addTimerAndDMAToGPIOController(&hmain.gpio, hmain.htim7);
     if(startupChecks) logMessage("GPIO OK");
     else{
         logMessage("GPIO ERROR");
@@ -138,12 +144,21 @@ void loopMain() {
     }
     if(hmain.gpio.btn2.isClicked) {
         setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_5V);
+        setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_RED);
+        setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_OFF);
+        setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_OFF);
     }
     if(hmain.gpio.btn3.isClicked) {
         setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_3V3);
+        setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_OFF);
+        setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_RED);
+        setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_OFF);
     }
     if(hmain.gpio.btn4.isClicked) {
         setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_1V8);
+        setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_OFF);
+        setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_OFF);
+        setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_RED);
     }
     
     loopOCXOCOntroller();

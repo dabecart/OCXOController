@@ -33,7 +33,15 @@ typedef struct GPIOExpander {
     uint8_t     i2cAddrs;
     uint8_t     initialized;
     uint16_t    direction; // 0: Output pin, 1: Input pin
-} GPIOExpander;
+
+    // Read all inputs after a call to readGPIOExpanderRegisterPolling_.
+    uint8_t inputPort0;
+    uint8_t inputPort1;
+
+    // DMA stores the read inputs after a call to readGPIOExpanderRegisterDMA_.
+    uint8_t     dmaInputPort0;
+    uint8_t     dmaInputPort1;
+} __attribute__((__packed__)) GPIOExpander;
 
 uint8_t initGPIOExpander(GPIOExpander* gpio, I2C_HandleTypeDef* i2cHandler, uint8_t i2cAddress);
 
@@ -41,8 +49,12 @@ uint8_t setDirectionGPIOExpander(GPIOExpander* gpio, uint8_t pin, GPIOEx_Directi
 
 uint8_t setStateGPIOExpander(GPIOExpander* gpio, uint8_t pin, GPIOEx_State state);
 uint8_t getStateGPIOExpander(GPIOExpander* gpio, uint8_t pin, GPIOEx_State* state);
+uint8_t getStateGPIOExpanderFromPolling(GPIOExpander* gpio, uint8_t pin, GPIOEx_State* state);
+uint8_t getStateGPIOExpanderFromDMA(GPIOExpander* gpio, uint8_t pin, GPIOEx_State* state);
 
 uint8_t writeGPIOExpanderRegister_(GPIOExpander* gpio, TCA6416Registers reg, uint8_t value);
 uint8_t readGPIOExpanderRegister_(GPIOExpander* gpio, TCA6416Registers reg, uint8_t* value);
+uint8_t readGPIOExpanderRegisterDMA_(GPIOExpander* gpio);
+uint8_t readGPIOExpanderRegisterPolling_(GPIOExpander* gpio);
 
 #endif // TCA6416_h

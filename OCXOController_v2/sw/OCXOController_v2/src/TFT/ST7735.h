@@ -78,7 +78,6 @@
 
 typedef struct TFT {
     SPI_HandleTypeDef* hspi;
-    DMA_HandleTypeDef* hdma;
 
     int16_t cursor_x; // x location to start printing text
     int16_t cursor_y; // y location to start printing text
@@ -93,7 +92,6 @@ typedef struct TFT {
 } TFT;
 
 void initTFT(TFT* tft, SPI_HandleTypeDef* hspi, uint8_t rotation);
-void setDMATFT(TFT* tft, DMA_HandleTypeDef* hdma);
 void setRotationTFT(TFT* tft, uint8_t m);
 void invertColorsTFT(TFT* tft, uint8_t invert);
 

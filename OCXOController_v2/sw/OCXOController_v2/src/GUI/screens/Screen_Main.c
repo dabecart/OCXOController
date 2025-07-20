@@ -4,8 +4,10 @@
 
 const float backgroundValue1 = 0.82;
 const float backgroundValue2 = 0.63;
+const int8_t maxRotIndex = 3;
 
 float screenInitTime = 0;
+int8_t rotIndex = 0;
 
 void drawBox(Display d, int16_t x0, int16_t y0, int16_t w, int16_t h, 
              uint16_t borderColor, uint16_t fillColor) {
@@ -35,13 +37,13 @@ void drawBox(Display d, int16_t x0, int16_t y0, int16_t w, int16_t h,
     (*d.buf)[y0+h - borderSize-1][x0+w - borderSize-1] = borderColor;
 }
 
-void drawChannelBox(Display d, OCXOChannel* ch, int16_t x0, int16_t y0) {
+void drawChannelBox(Display d, OCXOChannel* ch, int16_t x0, int16_t y0, uint8_t selected) {
     const uint16_t outputBoxWidth = 140;
     const uint16_t outputBoxHeight = 27;
     char str[16];
     const uint16_t strLen = sizeof(str) - 1;
 
-    drawBox(d, x0, y0, outputBoxWidth, outputBoxHeight, TFT_BLACK, TFT_WHITE);
+    drawBox(d, x0, y0, outputBoxWidth, outputBoxHeight, TFT_BLACK, selected ? TFT_WHITE : TFT_RED);
 
     setCurrentOrigin(ORIGIN_LEFT | ORIGIN_TOP);
     setCurrentPalette(TFT_BLACK, TRANSPARENT, TRANSPARENT, TRANSPARENT);
@@ -92,15 +94,17 @@ uint8_t mainScreen_draw(Display d) {
     drawBitmap(d, &miniOCXOLogo, 106, 4);
 
     // Menu boxes.
-    drawChannelBox(d, &hmain.chOuts.ch1, 15, 25);
-    drawChannelBox(d, &hmain.chOuts.ch2, 15, 56);
-    drawChannelBox(d, &hmain.chOuts.ch3, 15, 87);
+    drawChannelBox(d, &hmain.chOuts.ch1, 15, 25, rotIndex == 0);
+    drawChannelBox(d, &hmain.chOuts.ch2, 15, 56, rotIndex == 1);
+    drawChannelBox(d, &hmain.chOuts.ch3, 15, 87, rotIndex == 2);
 
     return 1;
 }
 
 void mainScreen_updateInput() {
-
+    rotIndex += getRotaryIncrement(&hmain.gpio.rot);
+    if(rotIndex >= maxRotIndex) rotIndex = 0;
+    else if(rotIndex < 0) rotIndex = maxRotIndex-1;
 }
 
 Screen mainScreen = {

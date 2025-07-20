@@ -9,8 +9,7 @@
 #include "GUI/Screen.h"
 #include "GUI/Overlay.h"
 
-uint8_t initGUI(SPI_HandleTypeDef* hspi, DMA_HandleTypeDef* hdma_spi1_tx, 
-                TIM_HandleTypeDef* guitim);
+uint8_t initGUI(SPI_HandleTypeDef* hspi, TIM_HandleTypeDef* guitim);
 
 void updateGUI();
 
@@ -20,5 +19,6 @@ void transferScreenToTFT();
 void transferToTFTEnded();
 
 extern uint8_t updateGUIInIRQ;
+extern TFT guiTFT;
 
 #endif // GUI_h

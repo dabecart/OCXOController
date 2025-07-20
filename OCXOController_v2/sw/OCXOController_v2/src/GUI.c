@@ -1,7 +1,7 @@
 #include "GUI.h"
 #include "MainMCU.h"
 
-TFT tft;
+TFT guiTFT;
 TIM_HandleTypeDef* GUI_TIM;
 
 // With rotation taken into account, use [y][x] to access.
@@ -22,21 +22,20 @@ volatile uint8_t screenReady = 0;
 volatile uint8_t transferInProgress = 0;
 volatile uint8_t missedDrawCall = 0;
 
-uint8_t initGUI(SPI_HandleTypeDef* hspi, DMA_HandleTypeDef* hdma_spi, TIM_HandleTypeDef* guitim) {
+uint8_t initGUI(SPI_HandleTypeDef* hspi, TIM_HandleTypeDef* guitim) {
     GUI_TIM = guitim;
 
     // TFT is horizontal.
-    initTFT(&tft, hspi, 3);
-    setDMATFT(&tft, hdma_spi);
+    initTFT(&guiTFT, hspi, 3);
 
     memset(&displayBuf, 0, sizeof(DisplayBuffer));
-    display = (Display){tft.width, tft.height, &displayBuf};
+    display = (Display){guiTFT.width, guiTFT.height, &displayBuf};
     
     // Keep the TFT selected, there isn't any other device connected to the SPI device.
-    selectTFT_(&tft);
+    selectTFT_(&guiTFT);
     // Set the adress window to be set to all the display. All changes of the display content must 
     // be done to the buffer inside the "display" variable.
-    setAddressWindowTFT_(&tft, 0, 0, tft.width-1, tft.height-1);
+    setAddressWindowTFT_(&guiTFT, 0, 0, guiTFT.width-1, guiTFT.height-1);
 
     // Start the display manager.
     initScreens();
@@ -47,9 +46,6 @@ uint8_t initGUI(SPI_HandleTypeDef* hspi, DMA_HandleTypeDef* hdma_spi, TIM_Handle
     // using DMA. This is only done if the display array is ready to be printed.
     HAL_TIM_Base_Start_IT(guitim);
     
-    // Take some time of the initialization to show the logo.
-    HAL_Delay(GUI_INITIAL_SCREEN_DELAY_ms);
-
     return 1;
 }
 
@@ -77,6 +73,7 @@ void updateGUI() {
             currentlyTransitioning = 0;
         }
     }else {
+        screens[currentScreen]->updateInput();
         updateDisplay |= screens[currentScreen]->draw(display);
     }
 
@@ -120,7 +117,7 @@ void transferScreenToTFT() {
 
     if(screenReady) {
         screenReady = 0;
-        writeDataTFT_DMA_(&tft, (uint8_t*) &displayBuf, sizeof(displayBuf));
+        writeDataTFT_DMA_(&guiTFT, (uint8_t*) &displayBuf, sizeof(displayBuf));
         transferInProgress = 1;
     }else if(!transferInProgress) {
         // The screen was not ready when it should have.

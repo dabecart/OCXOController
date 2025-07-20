@@ -68,7 +68,6 @@ void initTFT(TFT* tft, SPI_HandleTypeDef* hspi, uint8_t rotation) {
     if(tft == NULL || hspi == NULL) return;
 
     tft->hspi = hspi;
-    tft->hdma = NULL;
 
     selectTFT_(tft);
     resetTFT_(tft);
@@ -79,12 +78,6 @@ void initTFT(TFT* tft, SPI_HandleTypeDef* hspi, uint8_t rotation) {
     tft->rowstart = 0;
     setRotationTFT(tft, rotation);
     unselectTFT_(tft);
-}
-
-void setDMATFT(TFT* tft, DMA_HandleTypeDef* hdma) {
-    if(tft == NULL || hdma == NULL) return;
-    
-    tft->hdma = hdma;
 }
 
 void setRotationTFT(TFT* tft, uint8_t m) {
@@ -164,15 +157,8 @@ void writeDataTFT_(TFT* tft, uint8_t* buff, size_t buff_size) {
 }
 
 void writeDataTFT_DMA_(TFT* tft, uint8_t* buff, size_t buff_size) {
-    if(tft->hdma == NULL) return;
-
     HAL_GPIO_WritePin(TFT_A0_GPIO_Port, TFT_A0_Pin, GPIO_PIN_SET);
     HAL_SPI_Transmit_DMA(tft->hspi, buff, buff_size);
-
-    // This disables an interruption that triggers when the transmission is done.
-    // __HAL_DMA_DISABLE_IT(tft->hdma, DMA_IT_TC);
-    // This disables an interruption that triggers when the buffer gets filled to half its size.
-    __HAL_DMA_DISABLE_IT(tft->hdma, DMA_IT_HT);
 }
 
 uint16_t toColor565(uint8_t r, uint8_t g, uint8_t b) {

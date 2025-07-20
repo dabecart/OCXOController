@@ -5,7 +5,9 @@
 #include "GPIOExpander/TCA6416.h"
 #include "Defines.h"
 
-#define GPIO_CONTROLLER_DEBOUNCE_ms 400
+// If set, the GPIOs will be read individually, in other words, the GPIO expander will be read for
+// each read of a GPIO's state.
+#define GPIO_USE_INDIVIDUAL_READS 0
 
 // Voltage Controlled IO
 typedef enum VCIO {
@@ -86,28 +88,52 @@ typedef enum ButtonsGPIO {
     GPIO_BTN_4_Red,
 } ButtonsGPIO;
 
+typedef enum GPIOController_IRQStates {
+    GPIO_IRQ_NOT_INITIALIZED = 0,
+    GPIO_IRQ_IDLE,
+    GPIO_IRQ_READING_VOLTAGES_GPIO,
+    GPIO_IRQ_READING_BUTTONS_GPIO,
+} GPIOController_IRQStates;
+
 typedef struct ButtonData {
     Button btn;
     uint8_t isPressed;
     uint8_t isClicked;
-    uint32_t lastPress;
 } ButtonData;
 
+typedef struct RotaryEncoder {
+    GPIOExpander* gpio;
+    uint8_t pinA, pinB;
+
+    uint8_t previous;
+    int16_t increment;
+} RotaryEncoder;
+
 typedef struct GPIOController {
+    I2C_HandleTypeDef* hi2c;
     GPIOExpander voltagesGPIOs;
     GPIOExpander buttonGPIOs;
     uint8_t initialized;
+
+    uint8_t (*getStateFunction)(GPIOExpander*, uint8_t, GPIOEx_State*);
+    TIM_HandleTypeDef* htim;
+    GPIOController_IRQStates irqState;
 
     ButtonData btn1;
     ButtonData btn2;
     ButtonData btn3;
     ButtonData btn4;
     ButtonData btnRot;
+
+    RotaryEncoder rot;
 } GPIOController;
 
 uint8_t initGPIOController(GPIOController* hgpio, I2C_HandleTypeDef* i2cHandler);
-
 uint8_t updateGPIOController(GPIOController* hgpio);
+
+uint8_t addTimerAndDMAToGPIOController(GPIOController* hgpio, TIM_HandleTypeDef* htim);
+void gpioControllerTimerIRQ(GPIOController* hgpio);
+void gpioControllerDMA(GPIOController* hgpio);
 
 uint8_t setVoltageLevel(GPIOController* hgpio, VCIO gpio, VoltageLevel voltage);
 uint8_t getVoltageLevel(GPIOController* hgpio, VCIO gpio, VoltageLevel* voltage);
@@ -115,7 +141,7 @@ uint8_t getVoltageLevel(GPIOController* hgpio, VCIO gpio, VoltageLevel* voltage)
 uint8_t setButtonColor(GPIOController* hgpio, Button btn, ButtonColor color);
 uint8_t getButtonColor(GPIOController* hgpio, Button btn, ButtonColor* color);
 
-uint8_t getButtonState(GPIOController* hgpio, Button btn, GPIOEx_State* state);
+uint8_t getButtonState_(GPIOController* hgpio, Button btn, GPIOEx_State* state);
 
 uint8_t powerOCXO(GPIOController* hgpio, uint8_t powerOn);
 
@@ -128,5 +154,9 @@ uint8_t getRGBPins_(Button btn, ButtonsGPIO* rPin, ButtonsGPIO* gPin, ButtonsGPI
 uint8_t getButtonPin_(GPIOController* hgpio, Button btn, GPIOExpander** gpioex, uint8_t* pin);
 
 uint8_t initialAnimationGPIOController_(GPIOController* hgpio);
+
+uint8_t initRotaryEncoder_(RotaryEncoder* rot, GPIOExpander* gpio, uint8_t pinA, uint8_t pinB);
+void updateRotaryEncoder_(RotaryEncoder* rot, uint8_t (*getStateFunction)(GPIOExpander*, uint8_t, GPIOEx_State*));
+int8_t getRotaryIncrement(RotaryEncoder* rot);
 
 #endif // GPIO_CONTROLLER_h

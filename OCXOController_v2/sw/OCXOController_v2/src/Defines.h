@@ -54,9 +54,16 @@
 // Based on the values set for TIM6.
 #define GUI_FPS 10
 
-// Let the logo be shown for this ammount of time.
-#define GUI_INITIAL_SCREEN_DELAY_ms 2000 
-#define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 400
-#define GUI_INITIAL_SCREEN SCREEN_INTRO
+#define GUI_INITIAL_SCREEN SCREEN_MAIN
+
+#if GUI_INITIAL_SCREEN == SCREEN_INTRO
+    // Let the logo be shown for this ammount of time.
+    #define GUI_INITIAL_SCREEN_DELAY_ms 2000 
+    // Leave a little time so that the startup messages can be read.
+    #define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 300
+#else 
+    #define GUI_INITIAL_SCREEN_DELAY_ms 0 
+    #define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 0
+#endif
 
 #endif // DEFINES_h

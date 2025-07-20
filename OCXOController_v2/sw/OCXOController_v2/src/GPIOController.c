@@ -1,10 +1,21 @@
 #include "GPIOController.h"
 
+volatile GPIOController_IRQStates irqState;
+
 uint8_t initGPIOController(GPIOController* gpioc, I2C_HandleTypeDef* i2cHandler) {
-    if(gpioc == NULL || i2cHandler == NULL) {
-        return 0;
-    }
+    if(gpioc == NULL || i2cHandler == NULL) return 0;
+    
     gpioc->initialized = 1;
+    gpioc->hi2c = i2cHandler;
+    // If no timer or DMA is added, then the function to be used to get the state of the pin from 
+    // the GPIO controller is the "pollin" one, without DMA.
+#if GPIO_USE_INDIVIDUAL_READS
+    gpioc->getStateFunction = getStateGPIOExpander;
+#else 
+    gpioc->getStateFunction = getStateGPIOExpanderFromPolling;
+#endif
+
+    gpioc->irqState = GPIO_IRQ_NOT_INITIALIZED;
 
     memset(&gpioc->btn1, 0, sizeof(ButtonData));
     memset(&gpioc->btn2, 0, sizeof(ButtonData));
@@ -37,6 +48,10 @@ uint8_t initGPIOController(GPIOController* gpioc, I2C_HandleTypeDef* i2cHandler)
     // Set directions of the GPIOs.
     state &= setGPIOControllerDirections_(gpioc);
 
+    // Init rotary encoder.
+    state &= initRotaryEncoder_(&gpioc->rot, 
+                               &gpioc->voltagesGPIOs, GPIO_VOLT_ROT_A, GPIO_VOLT_ROT_B);
+
     // Boot up animation of the colored buttons.
     state &= initialAnimationGPIOController_(gpioc);
 
@@ -44,22 +59,66 @@ uint8_t initGPIOController(GPIOController* gpioc, I2C_HandleTypeDef* i2cHandler)
     return state;
 }
 
-uint8_t updateGPIOController(GPIOController* hgpio) {
-    if(hgpio == NULL) return 0;
+uint8_t addTimerAndDMAToGPIOController(GPIOController* hgpio, TIM_HandleTypeDef* htim) {
+    if(hgpio == NULL || htim == NULL) return 0;
 
-    ButtonData* btns[] = {&hgpio->btn1, &hgpio->btn2, &hgpio->btn3, &hgpio->btn4};
+    hgpio->htim = htim;
+    hgpio->getStateFunction = getStateGPIOExpanderFromDMA;
+    hgpio->irqState = GPIO_IRQ_IDLE;
+
+    // The timer will trigger an IRQ which will read the I2C devices sequentially through DMA.
+    HAL_TIM_Base_Start_IT(htim);
+
+    return 1;
+}
+
+void gpioControllerTimerIRQ(GPIOController* hgpio) {
+    if(hgpio == NULL || hgpio->irqState != GPIO_IRQ_IDLE) return;
+
+    if(readGPIOExpanderRegisterDMA_(&hgpio->voltagesGPIOs)) {
+        hgpio->irqState = GPIO_IRQ_READING_VOLTAGES_GPIO;
+    }
+}
+
+void gpioControllerDMA(GPIOController* hgpio) {
+    if(hgpio == NULL || hgpio->irqState == GPIO_IRQ_IDLE) return;
+    
+    switch (hgpio->irqState) {
+        case GPIO_IRQ_READING_VOLTAGES_GPIO: {
+            if(readGPIOExpanderRegisterDMA_(&hgpio->buttonGPIOs)) {
+                hgpio->irqState = GPIO_IRQ_READING_BUTTONS_GPIO;
+            }
+            break;
+        }
+        
+        case GPIO_IRQ_READING_BUTTONS_GPIO: {
+            hgpio->irqState = GPIO_IRQ_IDLE;
+            break;
+        }
+
+        default:    break;
+    }
+}
+
+uint8_t updateGPIOController(GPIOController* hgpio) {
+    if(hgpio == NULL || !hgpio->initialized) return 0;
+
+#if !GPIO_USE_INDIVIDUAL_READS
+    // Poll all input registers at once.
+    readGPIOExpanderRegisterPolling_(&hgpio->voltagesGPIOs);
+    readGPIOExpanderRegisterPolling_(&hgpio->buttonGPIOs);
+#endif
+
+    ButtonData* btns[] = {&hgpio->btn1, &hgpio->btn2, &hgpio->btn3, &hgpio->btn4, &hgpio->btnRot};
     
     GPIOEx_State newState;
     ButtonData* currentBtn;
     for(uint8_t i = 0; i < sizeof(btns)/sizeof(ButtonData*); i++) {
         currentBtn = btns[i];
 
-        if(!getButtonState(hgpio, currentBtn->btn, &newState)) {
-            continue;
-        }
+        if(!getButtonState_(hgpio, currentBtn->btn, &newState)) continue;
 
-        if((newState != currentBtn->isPressed) && 
-           (HAL_GetTick() - currentBtn->lastPress) >= GPIO_CONTROLLER_DEBOUNCE_ms) {
+        if(newState != currentBtn->isPressed) {
             if(newState == GPIOEx_HIGH) {
                 currentBtn->isClicked = 1;
             }
@@ -70,6 +129,8 @@ uint8_t updateGPIOController(GPIOController* hgpio) {
             currentBtn->isClicked = 0;
         }
     }
+
+    updateRotaryEncoder_(&hgpio->rot, hgpio->getStateFunction);
 
     return 1;
 }
@@ -178,9 +239,9 @@ uint8_t getButtonColor(GPIOController* hgpio, Button btn, ButtonColor* color) {
     }
 
     uint8_t rState, gState, bState;
-    uint8_t status = getStateGPIOExpander(&hgpio->buttonGPIOs, rPin, (GPIOEx_State*) &rState); 
-    status &= getStateGPIOExpander(&hgpio->buttonGPIOs, gPin, (GPIOEx_State*) &gState); 
-    status &= getStateGPIOExpander(&hgpio->buttonGPIOs, bPin, (GPIOEx_State*) &bState); 
+    uint8_t status = hgpio->getStateFunction(&hgpio->buttonGPIOs, rPin, (GPIOEx_State*) &rState); 
+    status &= hgpio->getStateFunction(&hgpio->buttonGPIOs, gPin, (GPIOEx_State*) &gState); 
+    status &= hgpio->getStateFunction(&hgpio->buttonGPIOs, bPin, (GPIOEx_State*) &bState); 
 
     if(status){
         *color = (ButtonColor) ((rState << 2) | (gState << 1) | bState);
@@ -189,18 +250,14 @@ uint8_t getButtonColor(GPIOController* hgpio, Button btn, ButtonColor* color) {
     return status;
 }
 
-uint8_t getButtonState(GPIOController* hgpio, Button btn, GPIOEx_State* state) {
-    if(hgpio == NULL || !hgpio->initialized) {
-        return 0;
-    }
-
+uint8_t getButtonState_(GPIOController* hgpio, Button btn, GPIOEx_State* state) {
     GPIOExpander* gpioex;
     uint8_t pin;
     if(!getButtonPin_(hgpio, btn, &gpioex, &pin)) {
         return 0;
     }
 
-    return getStateGPIOExpander(gpioex, pin, state);
+    return hgpio->getStateFunction(gpioex, pin, state);
 }
 
 uint8_t powerOCXO(GPIOController* hgpio, uint8_t powerOn) {
@@ -448,4 +505,42 @@ uint8_t initialAnimationGPIOController_(GPIOController* hgpio) {
         }
     }
     return state;
+}
+
+uint8_t initRotaryEncoder_(RotaryEncoder* rot, GPIOExpander* gpio, uint8_t pinA, uint8_t pinB) {
+    if(rot == NULL || gpio == NULL) return 0;
+
+    rot->gpio = gpio;
+    rot->pinA = pinA;
+    rot->pinB = pinB;
+    rot->previous = 0;
+
+    return 1;
+}
+
+void updateRotaryEncoder_(RotaryEncoder* rot, uint8_t (*getStateFunction)(GPIOExpander*, uint8_t, GPIOEx_State*)) {
+    // Enter this table as [current][previous].
+    const int8_t incrementArray[4][4] = {
+        { 0, +1, -1,  0},
+        {-1,  0,  0, +1},
+        {+1,  0,  0, -1},
+        { 0, -1, +1,  0},
+    };
+
+    GPIOEx_State stateA, stateB;
+    getStateFunction(rot->gpio, rot->pinA, &stateA);
+    getStateFunction(rot->gpio, rot->pinB, &stateB);
+
+    uint8_t current = (stateA << 1) | stateB;
+
+    rot->increment += incrementArray[current][rot->previous];
+    
+    rot->previous = current;
+}
+
+int8_t getRotaryIncrement(RotaryEncoder* rot) {
+    int8_t currentIncrement = rot->increment;
+    // Restart the increment after reading the increment.
+    rot->increment = 0;
+    return currentIncrement;
 }

@@ -114,6 +114,50 @@ uint8_t getStateGPIOExpander(GPIOExpander* gpio, uint8_t pin, GPIOEx_State* stat
     return status;
 }
 
+uint8_t getStateGPIOExpanderFromDMA(GPIOExpander* gpio, uint8_t pin, GPIOEx_State* state) {
+    if(gpio == NULL || state == NULL || !gpio->initialized || pin >= TCA6416_GPIO_COUNT) {
+        return 0;
+    }
+
+    uint8_t readRegContent = 0;
+    if(pin < 8) {
+        readRegContent = gpio->dmaInputPort0;
+    }else {
+        readRegContent = gpio->dmaInputPort1;
+        pin -= 8;
+    }
+
+    if(((readRegContent >> pin) & 0x01) == GPIOEx_HIGH) {
+        *state = GPIOEx_HIGH;
+    }else {
+        *state = GPIOEx_LOW;
+    }
+
+    return 1;
+}
+
+uint8_t getStateGPIOExpanderFromPolling(GPIOExpander* gpio, uint8_t pin, GPIOEx_State* state) {
+    if(gpio == NULL || state == NULL || !gpio->initialized || pin >= TCA6416_GPIO_COUNT) {
+        return 0;
+    }
+
+    uint8_t readRegContent = 0;
+    if(pin < 8) {
+        readRegContent = gpio->inputPort0;
+    }else {
+        readRegContent = gpio->inputPort1;
+        pin -= 8;
+    }
+
+    if(((readRegContent >> pin) & 0x01) == GPIOEx_HIGH) {
+        *state = GPIOEx_HIGH;
+    }else {
+        *state = GPIOEx_LOW;
+    }
+
+    return 1;
+}
+
 uint8_t writeGPIOExpanderRegister_(GPIOExpander* gpio, TCA6416Registers reg, uint8_t value) {
     if(gpio == NULL || !gpio->initialized) return 0;
     
@@ -128,6 +172,28 @@ uint8_t readGPIOExpanderRegister_(GPIOExpander* gpio, TCA6416Registers reg, uint
     
     HAL_StatusTypeDef st = HAL_I2C_Mem_Read(
         gpio->i2cHandler, gpio->i2cAddrs, reg, I2C_MEMADD_SIZE_8BIT, value, 1, 1000);
+    
+    return st == HAL_OK;
+}
+
+uint8_t readGPIOExpanderRegisterDMA_(GPIOExpander* gpio) {
+    if(gpio == NULL || !gpio->initialized) return 0;
+    
+    // This will read the two Input Port registers and store them into dmaInputPortx of gpio. 
+    HAL_StatusTypeDef st = HAL_I2C_Mem_Read_DMA(
+        gpio->i2cHandler, gpio->i2cAddrs, TCA6416_INPUT_PORT_0, 
+        I2C_MEMADD_SIZE_8BIT, &gpio->dmaInputPort0, 2);
+    
+    return st == HAL_OK;
+}
+
+uint8_t readGPIOExpanderRegisterPolling_(GPIOExpander* gpio) {
+    if(gpio == NULL || !gpio->initialized) return 0;
+    
+    // This will read the two Input Port registers and store them into inputPortx of gpio. 
+    HAL_StatusTypeDef st = HAL_I2C_Mem_Read(
+        gpio->i2cHandler, gpio->i2cAddrs, TCA6416_INPUT_PORT_0, 
+        I2C_MEMADD_SIZE_8BIT, &gpio->inputPort0, 2, 1000);
     
     return st == HAL_OK;
 }
