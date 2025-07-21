@@ -10,7 +10,7 @@ float screenInitTime = 0;
 int8_t rotIndex = 0;
 
 void drawBox(Display d, int16_t x0, int16_t y0, int16_t w, int16_t h, 
-             uint16_t borderColor, uint16_t fillColor) {
+             uint16_t borderColor, uint16_t fillColor, uint8_t useDithering) {
     const int16_t borderSize = 2; 
     
     // Box filling.
@@ -43,7 +43,10 @@ void drawChannelBox(Display d, OCXOChannel* ch, int16_t x0, int16_t y0, uint8_t 
     char str[16];
     const uint16_t strLen = sizeof(str) - 1;
 
-    drawBox(d, x0, y0, outputBoxWidth, outputBoxHeight, TFT_BLACK, selected ? TFT_WHITE : TFT_RED);
+    drawBox(d, x0, y0, outputBoxWidth, outputBoxHeight, 
+            TFT_BLACK, 
+            selected ? TFT_WHITE : switched_color565(230,230,230),
+            selected);
 
     setCurrentOrigin(ORIGIN_LEFT | ORIGIN_TOP);
     setCurrentPalette(TFT_BLACK, TRANSPARENT, TRANSPARENT, TRANSPARENT);
@@ -86,7 +89,7 @@ uint8_t mainScreen_draw(Display d) {
     GUI_CHECKERBOARD_COLOR2 = toColor565Reversed(r, g, b);
 
     // Draw background.
-    checkerboardBackground(d, guiTime);
+    checkerboardBackgroundMirrored(d, guiTime);
 
     // Draw small logo.
     setCurrentOrigin(ORIGIN_LEFT | ORIGIN_TOP);
@@ -102,9 +105,23 @@ uint8_t mainScreen_draw(Display d) {
 }
 
 void mainScreen_updateInput() {
-    rotIndex += getRotaryIncrement(&hmain.gpio.rot);
-    if(rotIndex >= maxRotIndex) rotIndex = 0;
-    else if(rotIndex < 0) rotIndex = maxRotIndex-1;
+    static uint32_t lastIncrementTime = 0;
+    uint32_t t = HAL_GetTick();
+
+    // Divide by 2 so that only movements which are "fast" (> 2) register.
+    int8_t incr = getRotaryIncrement(&hmain.gpio.rot) / 2;
+    if((incr == 0) || ((t - lastIncrementTime) < 200)) return;
+    lastIncrementTime = HAL_GetTick();
+    
+    // Even if the incr is big, it will be "cut" to only single increments. If multiple increments 
+    // are to be done, then keep moving the encoder for at least 200ms more. 
+    if(incr > 0) incr = 1;
+    else if(incr < 0) incr = -1;
+    rotIndex += incr;
+
+    // Do not allow rollover.
+    if(rotIndex >= maxRotIndex) rotIndex = maxRotIndex-1;
+    else if(rotIndex < 0) rotIndex = 0;
 }
 
 Screen mainScreen = {

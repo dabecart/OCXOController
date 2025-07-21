@@ -1,6 +1,7 @@
 #include "DrawUtils.h"
 
 uint16_t palette[4];
+Dithering dithering = DITHERING_OFF;
 uint8_t origin = ORIGIN_LEFT | ORIGIN_TOP;
 
 int16_t pwX = 0, pwY = 0, pwW = 0, pwH = 0;
@@ -44,7 +45,31 @@ void clippedMemsetH(Display display, int16_t x, int16_t y, uint16_t color, uint1
         if(endX >= display.width)    count = display.width - x;
     }
 
-    memsetDisplayBufferH(display.buf, x, y, color, count);
+    switch (dithering) {
+        default:
+        case DITHERING_OFF:
+            memsetDisplayBufferH(display.buf, x, y, color, count);
+            break;
+
+        case DITHERING_CROSSING:
+            memsetDisplayBufferH_PattDithering(display.buf, x, y, color, count, 2, 0, 0);
+            break;
+
+        case DITHERING_PATTERNED:
+            switch(y & 0x03) {
+                case 0:
+                case 2:
+                    memsetDisplayBufferH_PattDithering(display.buf, x, y, color, count, 2, 0, 1);
+                    break;
+                case 1:
+                    memsetDisplayBufferH_PattDithering(display.buf, x, y, color, count, 4, 2, 0);
+                    break;
+                case 3:
+                    memsetDisplayBufferH_PattDithering(display.buf, x, y, color, count, 2, 0, 0);
+                    break;
+            }
+            break;
+    }
 }
 
 void clippedMemsetV(Display display, int16_t x, int16_t y, uint16_t color, uint16_t count) {
@@ -293,4 +318,8 @@ void setCurrentPalette(uint16_t c00, uint16_t c01, uint16_t c10, uint16_t c11) {
 
 void setCurrentOrigin(uint8_t o) {
     origin = o;
+}
+
+void setDithering(Dithering dith) {
+    dithering = dith;
 }

@@ -32,13 +32,49 @@ void memset_u16(uint16_t *dst, uint16_t value, size_t count) {
 }
 
 void memsetDisplayBufferH(DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count) {
+    if(count == 0) return;
     uint16_t* arr = (*buf)[y0] + x0;
     for(uint16_t x = 0; x < count; x++) {
         arr[x] = value;
     }
 }
 
+void memsetDisplayBufferH_Dithering(DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, 
+                                    size_t count, uint16_t dither, uint16_t skip) {
+    if(count == 0) return;
+    uint16_t mod = (x0 + y0) % dither;
+
+    uint16_t* arr = (*buf)[y0] + x0;
+    for(uint16_t x = 0; x < count; x++) {
+        // if (x+y) % dithering <= skip then draw it.
+        if(mod <= skip) arr[x] = value;
+
+        // Next mod...
+        mod++;
+        if(mod >= dither) mod = 0;
+    }
+}
+
+void memsetDisplayBufferH_PattDithering(
+    DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count, 
+    uint16_t dither, uint16_t skip, uint16_t offset) {
+    
+    if(count == 0) return;
+    uint16_t mod = (x0 % dither) + offset;
+    if(mod >= dither) mod = 0;
+
+    uint16_t* arr = (*buf)[y0] + x0;
+    for(uint16_t x = 0; x < count; x++) {
+        if(mod <= skip) arr[x] = value;
+
+        // Next mod...
+        mod++;
+        if(mod >= dither) mod = 0;
+    }
+}
+
 void memsetDisplayBufferV(DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count) {
+    if(count == 0) return;
     for(uint16_t y = y0; y < y0 + count; y++) {
         (*buf)[y][x0] = value;
     }

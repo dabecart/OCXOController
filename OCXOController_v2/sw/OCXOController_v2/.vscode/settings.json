@@ -19,7 +19,8 @@
         "tca6416.h": "c",
         "screen.h": "c",
         "drawutils.h": "c",
-        "mainmcu.h": "c"
+        "mainmcu.h": "c",
+        "fonts.h": "c"
     },
     "cSpell.words": [
         "OCXO"

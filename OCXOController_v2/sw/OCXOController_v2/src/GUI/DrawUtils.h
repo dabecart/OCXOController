@@ -11,6 +11,20 @@
 
 #define TRANSPARENT 0x0821 // The darkest gray that is not black in 565.
 
+typedef enum Dithering {
+    DITHERING_OFF = 0,
+    
+    // x o x o
+    // o x o x
+    DITHERING_CROSSING,
+    
+    // o x o x o x o
+    // x x x o x x x
+    // o x o x o x o
+    // x o x o x o x
+    DITHERING_PATTERNED,
+} Dithering;
+
 typedef enum Origin {
     ORIGIN_LEFT     = 0x01,
     ORIGIN_MIDDLE   = 0x02,
@@ -36,5 +50,6 @@ uint8_t isOnDisplay(Display d, int16_t x, int16_t y);
 
 void setCurrentPalette(uint16_t c00, uint16_t c01, uint16_t c10, uint16_t c11);
 void setCurrentOrigin(uint8_t origin);
+void setDithering(Dithering dith);
 
 #endif // DRAW_UTILS_h

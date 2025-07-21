@@ -54,7 +54,7 @@
 // Based on the values set for TIM6.
 #define GUI_FPS 10
 
-#define GUI_INITIAL_SCREEN SCREEN_MAIN
+#define GUI_INITIAL_SCREEN SCREEN_INTRO
 
 #if GUI_INITIAL_SCREEN == SCREEN_INTRO
     // Let the logo be shown for this ammount of time.

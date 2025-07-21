@@ -106,7 +106,7 @@ typedef struct RotaryEncoder {
     uint8_t pinA, pinB;
 
     uint8_t previous;
-    int16_t increment;
+    int8_t increment;
 } RotaryEncoder;
 
 typedef struct GPIOController {

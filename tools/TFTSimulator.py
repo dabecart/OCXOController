@@ -55,7 +55,7 @@ def update(frame):
 # === Run animation ===
 frame_count = DURATION_SEC * FPS
 ani = animation.FuncAnimation(fig, update, frames=frame_count, interval=1000 // FPS, blit=True)
-# plt.show()
+plt.show()
 
 # === Optional: Save to MP4 ===
 # import matplotlib as mpl 

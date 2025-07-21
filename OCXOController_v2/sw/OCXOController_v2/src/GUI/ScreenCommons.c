@@ -79,11 +79,14 @@ void checkerboardBackground(Display d, float time) {
             // direction, outside the circle.
             displacedCheckerboard(d, cx + x, cy + y, r,  1,  1);
             displacedCheckerboard(d, cx + y, cy + x, r,  1,  1);
-            displacedCheckerboard(d, cx + y, cy - x, r, -1,  1);
+            
             displacedCheckerboard(d, cx - x, cy + y, r, -1,  1);
+            displacedCheckerboard(d, cx - y, cy + x, r, -1,  1);
+
             displacedCheckerboard(d, cx - x, cy - y, r, -1, -1);
             displacedCheckerboard(d, cx - y, cy - x, r, -1, -1);
-            displacedCheckerboard(d, cx - y, cy + x, r,  1, -1);
+
+            displacedCheckerboard(d, cx + y, cy - x, r,  1, -1);
             displacedCheckerboard(d, cx + x, cy - y, r,  1, -1);
 
             y++;
@@ -94,6 +97,45 @@ void checkerboardBackground(Display d, float time) {
                 x--;
             }
         }
+    }
+}
+
+void checkerboardBackgroundMirrored(Display d, float time) {
+    int16_t maxRadius = ceilf(sqrtCORDIC(d.width*d.width + d.height*d.height)/2.0);
+
+    // Fill background.
+    // Instead of calculating for each pixel a sine + sqrt, let's traverse the display in circles.
+    int16_t t1, t2, x, y;
+    for(uint16_t r = 0; r <= maxRadius; r++) {
+        calculateRippleConstantsForCircle(r, time);
+
+        // Midpoint circle algorithm.
+        t1 = r >> 4;
+        x = r;
+        y = 0;
+        while(x >= y) {
+            // (x,y) is in the first octant and belongs to the circle. Replicate on the other 
+            // octants to get the full circle.
+            // Fill the empty spaces left by the midpoint circle algorithm. These are in radial 
+            // direction, outside the circle.
+            displacedCheckerboard(d, cx + x, cy + y, r,  1,  1);
+            displacedCheckerboard(d, cx + y, cy + x, r,  1,  1);
+            
+            displacedCheckerboard(d, cx - x, cy + y, r, -1,  1);
+            displacedCheckerboard(d, cx - y, cy + x, r, -1,  1);
+
+            y++;
+            t1 += y;
+            t2 = t1 - x;
+            if(t2 >= 0) {
+                t1 = t2;
+                x--;
+            }
+        }
+    }
+
+    for(int16_t row = 0; row < d.height/2; row++) {
+        memcpy((*d.buf)[row], (*d.buf)[d.height-1-row], sizeof(DisplayBufferRow));
     }
 
 }

@@ -23,6 +23,7 @@ typedef struct Screen {
 void initScreens();
 
 void checkerboardBackground(Display d, float time);
+void checkerboardBackgroundMirrored(Display d, float time);
 
 extern uint16_t GUI_CHECKERBOARD_COLOR1;
 extern uint16_t GUI_CHECKERBOARD_COLOR2;

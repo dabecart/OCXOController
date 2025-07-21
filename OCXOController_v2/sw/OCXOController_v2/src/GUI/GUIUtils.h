@@ -12,8 +12,23 @@ typedef DisplayBufferRow DisplayBuffer[ST7735_WIDTH];
 
 void hsv2rgb(float h, float s, float v, uint8_t *r, uint8_t *g, uint8_t *b);
 
-void memsetDisplayBufferH(DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count) __attribute__((optimize("O3")));
-void memsetDisplayBufferV(DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count) __attribute__((optimize("O3")));
+void memsetDisplayBufferH(
+    DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count) 
+    __attribute__((optimize("O3")));
+
+void memsetDisplayBufferH_Dithering(
+    DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count, 
+    uint16_t dither, uint16_t skip) 
+    __attribute__((optimize("O3")));
+
+void memsetDisplayBufferH_PattDithering(
+    DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count, 
+    uint16_t dither, uint16_t skip, uint16_t offset) 
+    __attribute__((optimize("O3")));
+
+void memsetDisplayBufferV(
+    DisplayBuffer* buf, int16_t x0, int16_t y0, uint16_t value, size_t count) 
+    __attribute__((optimize("O3")));
 
 extern float guiTime;
 
