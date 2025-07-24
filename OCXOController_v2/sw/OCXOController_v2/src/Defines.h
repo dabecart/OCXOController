@@ -56,14 +56,12 @@
 
 #define GUI_INITIAL_SCREEN SCREEN_INTRO
 
-#if GUI_INITIAL_SCREEN == SCREEN_INTRO
-    // Let the logo be shown for this ammount of time.
-    #define GUI_INITIAL_SCREEN_DELAY_ms 2000 
-    // Leave a little time so that the startup messages can be read.
-    #define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 300
-#else 
-    #define GUI_INITIAL_SCREEN_DELAY_ms 0 
-    #define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 0
-#endif
+// // Let the logo be shown for this ammount of time.
+// #define GUI_INITIAL_SCREEN_DELAY_ms 2000 
+// // Leave a little time so that the startup messages can be read.
+// #define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 300
+
+#define GUI_INITIAL_SCREEN_DELAY_ms 0 
+#define GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms 0
 
 #endif // DEFINES_h

@@ -121,15 +121,16 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     // Turn on the LED.
     HAL_GPIO_WritePin(TEST_LED_GPIO_Port, TEST_LED_Pin, 1);
 
-    setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_3V3);
+    setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_5V);
     setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_IN,   VOLTAGE_LEVEL_3V3);
 
+    HAL_TIM_Base_Start(hmain.htim1);
     HAL_TIM_OC_Start(hmain.htim1, TIM_CHANNEL_3);
 
     logMessage("Enjoy!");
 
     updateGUIInIRQ = 0;
-    requestScreenChange(SCREEN_MAIN);
+    requestScreenChange(SCREEN_MAIN, NULL);
     
     hmain.initialized = 1;
     hmain.doingInitialization = 0;
@@ -141,21 +142,28 @@ void loopMain() {
     if(hmain.gpio.btn1.isClicked) {
         ocxoOn = !ocxoOn;
         powerOCXO(&hmain.gpio, ocxoOn);
+        setButtonColor(&hmain.gpio, BUTTON_1, ocxoOn ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
     }
     if(hmain.gpio.btn2.isClicked) {
         setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_5V);
+        setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_5V);
+
         setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_RED);
         setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_OFF);
         setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_OFF);
     }
     if(hmain.gpio.btn3.isClicked) {
         setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_3V3);
+        setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_3V3);
+
         setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_OFF);
         setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_RED);
         setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_OFF);
     }
     if(hmain.gpio.btn4.isClicked) {
         setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_1V8);
+        setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_1V8);
+
         setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_OFF);
         setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_OFF);
         setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_RED);

@@ -1,10 +1,12 @@
 #include "Screen.h"
 
-Screen* screens[SCREN_LAST];
+Screen* screens[SCREEN_LAST];
+const int16_t borderBoxSize = 2; 
 
 void initScreens() {
     screens[SCREEN_INTRO] = &introScreen;
     screens[SCREEN_MAIN] = &mainScreen;
+    screens[SCREEN_OUT] = &outScreen;
 }
 
 // Ripple distortion (adjust frequency, amplitude, and speed)
@@ -17,8 +19,8 @@ const float cy = ST7735_WIDTH / 2.0f;
 
 float rippleScale = 0;
 
-uint16_t GUI_CHECKERBOARD_COLOR1 = switched_color565(210,0,0);
-uint16_t GUI_CHECKERBOARD_COLOR2 = switched_color565(160,0,0);
+uint16_t GUI_CHECKERBOARD_COLOR1 = reversed_color565(210,0,0);
+uint16_t GUI_CHECKERBOARD_COLOR2 = reversed_color565(160,0,0);
 
 void calculateRippleConstantsForCircle(float radius, float time) {
     float rippleFactor = sinCORDIC(radius * rippleFrequency - time * rippleSpeed) 
@@ -138,6 +140,33 @@ void checkerboardBackgroundMirrored(Display d, float time) {
         memcpy((*d.buf)[row], (*d.buf)[d.height-1-row], sizeof(DisplayBufferRow));
     }
 
+}
+
+void drawBox(Display d, int16_t x0, int16_t y0, int16_t w, int16_t h, 
+             uint16_t borderColor, uint16_t fillColor) {
+    // Box filling.
+    fillRectangle(d, x0 + borderBoxSize, y0 + borderBoxSize, 
+                  w-2*borderBoxSize, h - 2*borderBoxSize, fillColor);
+
+    // Top line.
+    fillRectangle(d, x0 + 1, y0, w - 2, borderBoxSize, borderColor);
+    // Bot line.
+    fillRectangle(d, x0 + 1, y0 + h - borderBoxSize, w - 2, borderBoxSize, borderColor);
+    // Left line.
+    fillRectangle(d, x0, y0 + 1, borderBoxSize, h - 2, borderColor);
+    // Right line.
+    fillRectangle(d, x0 + w - borderBoxSize, y0 + 1, borderBoxSize, h - 2, borderColor);
+
+    // Inner corner pixels.
+
+    // Top left.
+    (*d.buf)[y0 + borderBoxSize][x0 + borderBoxSize] = borderColor;
+    // Bottom left.
+    (*d.buf)[y0+h - borderBoxSize-1][x0 + borderBoxSize] = borderColor;
+    // Top right.
+    (*d.buf)[y0 + borderBoxSize][x0+w - borderBoxSize-1] = borderColor;
+    // Bottom right.
+    (*d.buf)[y0+h - borderBoxSize-1][x0+w - borderBoxSize-1] = borderColor;
 }
 
 uint16_t rainbowGradient(uint16_t x, uint16_t y, uint16_t width, uint16_t height) {

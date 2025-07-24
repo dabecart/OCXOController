@@ -40,7 +40,7 @@ uint8_t initGUI(SPI_HandleTypeDef* hspi, TIM_HandleTypeDef* guitim) {
     // Start the display manager.
     initScreens();
     // Init variables of the initial screen.
-    screens[currentScreen]->initScreen();
+    screens[currentScreen]->initScreen(NULL);
 
     // This timer is in charge of generating an IRQ to send the display buffer to the TFT display 
     // using DMA. This is only done if the display array is ready to be printed.
@@ -55,6 +55,8 @@ void updateGUI() {
     if(transferInProgress || screenReady) return;
 
     uint32_t initalT = HAL_GetTick();
+    
+    if(!currentlyTransitioning) screens[currentScreen]->updateInput();
 
     uint8_t updateDisplay = 0;
     if(currentlyTransitioning) {
@@ -73,7 +75,6 @@ void updateGUI() {
             currentlyTransitioning = 0;
         }
     }else {
-        screens[currentScreen]->updateInput();
         updateDisplay |= screens[currentScreen]->draw(display);
     }
 
@@ -89,13 +90,13 @@ void updateGUI() {
     }
 }
 
-void requestScreenChange(ScreenID nextScreen) {
+void requestScreenChange(ScreenID nextScreen, void** newScreenArgs) {
     if(nextScreen == currentScreen || currentlyTransitioning) return;
 
     previousScreen = currentScreen;
     currentScreen = nextScreen;
 
-    screens[currentScreen]->initScreen();
+    screens[currentScreen]->initScreen(newScreenArgs);
 
     currentlyTransitioning = 
         createOverlay(&transitionOverlay, OVERLAY_CURTAIN_SWEEP_IN_LEFT_OUT_LEFT);

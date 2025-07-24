@@ -63,7 +63,7 @@
 #define ST7735_GMCTRP1 0xE0
 #define ST7735_GMCTRN1 0xE1
 
-// Color definitions in switched_color565.
+// Color definitions in reversed_color565.
 #define	TFT_BLACK   0x0000
 #define	TFT_BLUE    0x1F00
 #define	TFT_RED     0x00F8
@@ -74,7 +74,7 @@
 #define TFT_WHITE   0xFFFF
 
 #define color565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
-#define switched_color565(r, g, b) ((color565(r, g, b) << 8) | (color565(r, g, b) >> 8))&0xFFFF
+#define reversed_color565(r, g, b) ((color565(r, g, b) << 8) | (color565(r, g, b) >> 8))&0xFFFF
 
 typedef struct TFT {
     SPI_HandleTypeDef* hspi;

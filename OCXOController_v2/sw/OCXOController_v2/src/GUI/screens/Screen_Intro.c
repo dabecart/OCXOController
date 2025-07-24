@@ -1,7 +1,7 @@
 #include "GUI/Screen.h"
 #include "commons/Logs.h"
 
-void introScreen_initScreen() {
+void introScreen_initScreen(void** screenArgs) {
     // Set the initial screen "subtitle" to be this.
     logMessage("by @dabecart");
 }

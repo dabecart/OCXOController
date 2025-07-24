@@ -121,6 +121,9 @@ uint8_t updateGPIOController(GPIOController* hgpio) {
         if(newState != currentBtn->isPressed) {
             if(newState == GPIOEx_HIGH) {
                 currentBtn->isClicked = 1;
+
+                currentBtn->wasClicked = 1;
+                currentBtn->lastTimeClicked = HAL_GetTick();
             }
             currentBtn->isPressed = newState;
         }else {
@@ -248,6 +251,43 @@ uint8_t getButtonColor(GPIOController* hgpio, Button btn, ButtonColor* color) {
     }
 
     return status;
+}
+
+uint8_t wasButtonClicked(GPIOController* hgpio, Button btn) {
+    if(hgpio == NULL) return 0;
+    ButtonData* btnData;
+
+    switch(btn) {
+        case BUTTON_1: {
+            btnData = &hgpio->btn1;
+            break;
+        }
+        case BUTTON_2: {
+            btnData = &hgpio->btn2;
+            break;
+        }
+        case BUTTON_3: {
+            btnData = &hgpio->btn3;
+            break;
+        }
+        case BUTTON_4: {
+            btnData = &hgpio->btn4;
+            break;
+        }
+        case BUTTON_ROT: {
+            btnData = &hgpio->btnRot;
+            break;
+        }
+    }
+
+    uint8_t ret = 0;
+    if(btnData->wasClicked && 
+       (HAL_GetTick() - btnData->lastTimeClicked) <= GPIO_WAS_CLICKED_TOLERANCE_ms) {
+        ret = 1;
+    }
+
+    btnData->wasClicked = 0;
+    return ret;
 }
 
 uint8_t getButtonState_(GPIOController* hgpio, Button btn, GPIOEx_State* state) {
@@ -543,4 +583,21 @@ int8_t getRotaryIncrement(RotaryEncoder* rot) {
     // Restart the increment after reading the increment.
     rot->increment = 0;
     return currentIncrement;
+}
+
+int8_t getFilteredRotaryIncrement(RotaryEncoder* rot) {
+    static uint32_t lastIncrementTime = 0;
+    uint32_t t = HAL_GetTick();
+
+    // Divide by 2 so that only movements which are "fast" (> 2) register.
+    int8_t incr = getRotaryIncrement(rot) / 2;
+    if((incr == 0) || ((t - lastIncrementTime) < 200)) return 0;
+    lastIncrementTime = HAL_GetTick();
+    
+    // Even if the incr is big, it will be "cut" to only single increments. If multiple increments 
+    // are to be done, then keep moving the encoder for at least 200ms more. 
+    if(incr > 0) incr = 1;
+    else if(incr < 0) incr = -1;
+    
+    return incr;
 }

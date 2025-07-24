@@ -2,40 +2,8 @@
 #include "MainMCU.h"
 #include "GUI/Bitmaps.h"
 
-const float backgroundValue1 = 0.82;
-const float backgroundValue2 = 0.63;
-const int8_t maxRotIndex = 3;
-
-float screenInitTime = 0;
-int8_t rotIndex = 0;
-
-void drawBox(Display d, int16_t x0, int16_t y0, int16_t w, int16_t h, 
-             uint16_t borderColor, uint16_t fillColor, uint8_t useDithering) {
-    const int16_t borderSize = 2; 
-    
-    // Box filling.
-    fillRectangle(d, x0 + borderSize, y0 + borderSize, w-2*borderSize, h - 2*borderSize, fillColor);
-
-    // Top line.
-    fillRectangle(d, x0 + 1, y0, w - 2, borderSize, borderColor);
-    // Bot line.
-    fillRectangle(d, x0 + 1, y0 + h - borderSize, w - 2, borderSize, borderColor);
-    // Left line.
-    fillRectangle(d, x0, y0 + 1, borderSize, h - 2, borderColor);
-    // Right line.
-    fillRectangle(d, x0 + w - borderSize, y0 + 1, borderSize, h - 2, borderColor);
-
-    // Inner corner pixels.
-
-    // Top left.
-    (*d.buf)[y0 + borderSize][x0 + borderSize] = borderColor;
-    // Bottom left.
-    (*d.buf)[y0+h - borderSize-1][x0 + borderSize] = borderColor;
-    // Top right.
-    (*d.buf)[y0 + borderSize][x0+w - borderSize-1] = borderColor;
-    // Bottom right.
-    (*d.buf)[y0+h - borderSize-1][x0+w - borderSize-1] = borderColor;
-}
+float main_screenInitTime = 0;
+int8_t main_rotIndex = 0;
 
 void drawChannelBox(Display d, OCXOChannel* ch, int16_t x0, int16_t y0, uint8_t selected) {
     const uint16_t outputBoxWidth = 140;
@@ -45,8 +13,7 @@ void drawChannelBox(Display d, OCXOChannel* ch, int16_t x0, int16_t y0, uint8_t 
 
     drawBox(d, x0, y0, outputBoxWidth, outputBoxHeight, 
             TFT_BLACK, 
-            selected ? TFT_WHITE : switched_color565(230,230,230),
-            selected);
+            selected ? TFT_WHITE : reversed_color565(230,230,230));
 
     setCurrentOrigin(ORIGIN_LEFT | ORIGIN_TOP);
     setCurrentPalette(TFT_BLACK, TRANSPARENT, TRANSPARENT, TRANSPARENT);
@@ -54,33 +21,29 @@ void drawChannelBox(Display d, OCXOChannel* ch, int16_t x0, int16_t y0, uint8_t 
     snprintf(str, strLen, "Out %d", ch->id);
     drawString(d, str, Font_7x10, x0 + 6, y0 + 4);
 
-    switch (ch->voltage)
-    {
-        case VOLTAGE_LEVEL_5V:   strcpy(str, "5V");     break;
-        case VOLTAGE_LEVEL_3V3:  strcpy(str, "3V3");    break;
-        case VOLTAGE_LEVEL_1V8:  strcpy(str, "1V8");    break;
-        default:                 strcpy(str, "?V");     break;
-    }
-    drawString(d, str, Font_7x10, x0 + 6, y0 + 15);
+    drawString(d, ch->config.voltage, Font_7x10, x0 + 6, y0 + 15);
 
-    convertFrequencyToString(str, strLen, ch->frequency);
+    getFrequencyString(ch, str, strLen);
     drawString(d, str, Font_7x10, x0 + 59, y0 + 4);
     
     snprintf(str, strLen, "%d%%", (uint16_t)(ch->dutyCycle*100));
     drawString(d, str, Font_7x10, x0 + 59, y0 + 15);
     
     setCurrentOrigin(ORIGIN_RIGHT | ORIGIN_TOP);
-    convertPhaseToString(str, strLen, ch->phase_ns);
+    getPhaseString(ch, str, strLen);
     drawString(d, str, Font_7x10, x0 + 135, y0 + 15);
 }
 
-void mainScreen_initScreen() {
-    screenInitTime = guiTime;
+void mainScreen_initScreen(void** screenArgs) {
+    main_screenInitTime = guiTime;
 }
 
 uint8_t mainScreen_draw(Display d) {
+    const float backgroundValue1 = 0.82;
+    const float backgroundValue2 = 0.63;
+
     // Full rotation of background color every two minutes.
-    float backgroundHue = fmod(guiTime - screenInitTime, 120.0f) / 120.0f;
+    float backgroundHue = fmod(guiTime - main_screenInitTime, 120.0f) / 120.0f;
 
     uint8_t r, g, b;
     hsv2rgb(backgroundHue, 1.0f, backgroundValue1, &r, &g, &b);
@@ -97,31 +60,28 @@ uint8_t mainScreen_draw(Display d) {
     drawBitmap(d, &miniOCXOLogo, 106, 4);
 
     // Menu boxes.
-    drawChannelBox(d, &hmain.chOuts.ch1, 15, 25, rotIndex == 0);
-    drawChannelBox(d, &hmain.chOuts.ch2, 15, 56, rotIndex == 1);
-    drawChannelBox(d, &hmain.chOuts.ch3, 15, 87, rotIndex == 2);
+    drawChannelBox(d, &hmain.chOuts.ch1, 15, 25, main_rotIndex == 0);
+    drawChannelBox(d, &hmain.chOuts.ch2, 15, 56, main_rotIndex == 1);
+    drawChannelBox(d, &hmain.chOuts.ch3, 15, 87, main_rotIndex == 2);
 
     return 1;
 }
 
 void mainScreen_updateInput() {
-    static uint32_t lastIncrementTime = 0;
-    uint32_t t = HAL_GetTick();
+    if(wasButtonClicked(&hmain.gpio, BUTTON_ROT)) {
+        OCXOChannel* ch;
+        getOCXOOutputsFromID_(&hmain.chOuts, main_rotIndex+1, &ch);
 
-    // Divide by 2 so that only movements which are "fast" (> 2) register.
-    int8_t incr = getRotaryIncrement(&hmain.gpio.rot) / 2;
-    if((incr == 0) || ((t - lastIncrementTime) < 200)) return;
-    lastIncrementTime = HAL_GetTick();
-    
-    // Even if the incr is big, it will be "cut" to only single increments. If multiple increments 
-    // are to be done, then keep moving the encoder for at least 200ms more. 
-    if(incr > 0) incr = 1;
-    else if(incr < 0) incr = -1;
-    rotIndex += incr;
+        void* args[] = {ch};
+        requestScreenChange(SCREEN_OUT, args);
+        return;
+    }
+
+    main_rotIndex += getFilteredRotaryIncrement(&hmain.gpio.rot);
 
     // Do not allow rollover.
-    if(rotIndex >= maxRotIndex) rotIndex = maxRotIndex-1;
-    else if(rotIndex < 0) rotIndex = 0;
+    if(main_rotIndex >= 3)      main_rotIndex = 2;
+    else if(main_rotIndex < 0)  main_rotIndex = 0;
 }
 
 Screen mainScreen = {

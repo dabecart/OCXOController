@@ -2,7 +2,7 @@
 
 const int16_t barWidth = 10;
 const float sweepTime = 1.5f;
-const uint16_t animationColor = switched_color565(200,0,0);
+const uint16_t animationColor = reversed_color565(200,0,0);
 
 // The displacement = a*t^2. At t = sweepTime, the displacement should be the width of the TFT,
 // therefore the "a" factor should be:
