@@ -17,5 +17,8 @@ typedef struct Bitmap {
 
 extern const Bitmap OCXOLogo;
 extern const Bitmap miniOCXOLogo;
+extern const Bitmap leftArrow;
+extern const Bitmap rightArrow;
+extern const Bitmap backArrow;
 
 #endif // BITMAPS_h

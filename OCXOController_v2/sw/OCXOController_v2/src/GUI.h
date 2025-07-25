@@ -13,7 +13,7 @@ uint8_t initGUI(SPI_HandleTypeDef* hspi, TIM_HandleTypeDef* guitim);
 
 void updateGUI();
 
-void requestScreenChange(ScreenID nextScreen, void** newScreenArgs);
+void requestScreenChange(ScreenID nextScreen, void** newScreenArgs, uint8_t useTransition);
 
 void transferScreenToTFT();
 void transferToTFTEnded();

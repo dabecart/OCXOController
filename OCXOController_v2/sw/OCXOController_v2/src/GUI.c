@@ -90,7 +90,7 @@ void updateGUI() {
     }
 }
 
-void requestScreenChange(ScreenID nextScreen, void** newScreenArgs) {
+void requestScreenChange(ScreenID nextScreen, void** newScreenArgs, uint8_t useTransition) {
     if(nextScreen == currentScreen || currentlyTransitioning) return;
 
     previousScreen = currentScreen;
@@ -98,8 +98,10 @@ void requestScreenChange(ScreenID nextScreen, void** newScreenArgs) {
 
     screens[currentScreen]->initScreen(newScreenArgs);
 
-    currentlyTransitioning = 
-        createOverlay(&transitionOverlay, OVERLAY_CURTAIN_SWEEP_IN_LEFT_OUT_LEFT);
+    if(useTransition) {
+        currentlyTransitioning = 
+            createOverlay(&transitionOverlay, OVERLAY_CURTAIN_SWEEP_IN_LEFT_OUT_LEFT);
+    }
 }
 
 void transferScreenToTFT() {

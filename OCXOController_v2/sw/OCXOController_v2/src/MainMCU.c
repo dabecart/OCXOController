@@ -130,7 +130,7 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     logMessage("Enjoy!");
 
     updateGUIInIRQ = 0;
-    requestScreenChange(SCREEN_MAIN, NULL);
+    requestScreenChange(SCREEN_MAIN, NULL, 1);
     
     hmain.initialized = 1;
     hmain.doingInitialization = 0;

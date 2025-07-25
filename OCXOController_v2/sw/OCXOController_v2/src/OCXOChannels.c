@@ -73,7 +73,7 @@ uint8_t applyOCXOOutputFromConfiguration(OCXOChannels* outs, uint8_t id) {
 
     // Converts the char arrays in the config into their respective values.
     float desiredFrequency = charArrayToFloat(out->config.freq, out->config.freqUnits);
-    float desiredDutyCycle = charArrayToFloat(out->config.duty, out->config.dutyUnits);
+    float desiredDutyCycle = charArrayToFloat(out->config.duty, out->config.dutyUnits) * 0.01f;
     float desiredPhase_ns  = charArrayToFloat(out->config.phase, out->config.phaseUnits) * 1e9f;
 
     VoltageLevel desiredVoltage = VOLTAGE_LEVEL_OFF;
@@ -124,10 +124,10 @@ void getPhaseString(OCXOChannel* ch, char* str, int16_t len) {
     uint32_t scaled;
     uint64_t unsignedPhase;
     if(ch->phase_ns > 0) {
-        unsignedPhase = ch->phase_ns;
+        unsignedPhase = roundf(ch->phase_ns);
         scaled = 1;
     }else {
-        unsignedPhase = -ch->phase_ns;
+        unsignedPhase = -roundf(ch->phase_ns);
         scaled = -1;
     }
 

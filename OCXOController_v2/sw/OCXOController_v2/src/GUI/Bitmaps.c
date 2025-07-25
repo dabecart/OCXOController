@@ -312,8 +312,34 @@ const uint16_t miniOCXOLogoBuf[] = {
     0xAAAA, 0xF2AA, 0x003F, 0x0000, 0x0000, 0x3F00, 0x0000, 0xFC00, 
 };
 
+const uint16_t leftArrowBuf[] = {
+    0x03FF, 0x20FF, 0x283F, 0x2A0F, 0x2A83, 0x2AA0, 0x2A83, 0x2A0F, 
+    0x283F, 0x20FF, 0x03FF, 
+};
+
+const uint16_t rightArrowBuf[] = {
+    0xFFC0, 0xFF08, 0xFC28, 0xF0A8, 0xC2A8, 0x0AA8, 0xC2A8, 0xF0A8, 
+    0xFC28, 0xFF08, 0xFFC0, 
+};
+
+const uint16_t backArrowBuf[] = {
+    0x3FFF, 0xFFFC, 0x0FFF, 0xFFFC, 0x83FF, 0xFFFC, 0xA0FF, 0xFFFC, 
+    0xA83F, 0xFF00, 0xAA0F, 0xFC2A, 0xAA83, 0xC0AA, 0xAAA0, 0xCAAA, 
+    0xAA83, 0xCAAA, 0xAA0F, 0x0AAA, 0xA83F, 0x2800, 0xA0FF, 0x20FC, 
+    0x83FF, 0x03FC, 0x0FFF, 0x0FFC, 0x3FFF, 0x3FFC, 
+};
+
 const Bitmap OCXOLogo = {OCXOLogoBuf, sizeof(OCXOLogoBuf), 
-                         160, 78, BITMAP_COMPRESSED};
+                        160, 78, BITMAP_COMPRESSED};
 
 const Bitmap miniOCXOLogo = {(const uint8_t*) miniOCXOLogoBuf, sizeof(miniOCXOLogoBuf), 
-                             48, 16, BITMAP_PALETTE};
+                        48, 16, BITMAP_PALETTE};
+
+const Bitmap leftArrow = {(const uint8_t*) leftArrowBuf, sizeof(leftArrowBuf), 
+                        8, 11, BITMAP_PALETTE};
+
+const Bitmap rightArrow = {(const uint8_t*) rightArrowBuf, sizeof(rightArrowBuf), 
+                        8, 11, BITMAP_PALETTE};
+
+const Bitmap backArrow = {(const uint8_t*) backArrowBuf, sizeof(backArrowBuf), 
+                        16, 15, BITMAP_PALETTE};

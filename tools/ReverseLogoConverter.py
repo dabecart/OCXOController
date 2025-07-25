@@ -5,7 +5,7 @@ from PIL import Image
 # === Settings ===
 input_c_file = "output.c"
 output_image_path = "reconstructed.png"
-image_width = 160
+image_width = 16
 tone_map = {
     0b00 : 0,
     0b01 : 122,

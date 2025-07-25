@@ -15,6 +15,12 @@ void drawChannelBox(Display d, OCXOChannel* ch, int16_t x0, int16_t y0, uint8_t 
             TFT_BLACK, 
             selected ? TFT_WHITE : reversed_color565(230,230,230));
 
+    if(selected) {
+        setCurrentOrigin(ORIGIN_RIGHT | ORIGIN_CENTER);
+        setCurrentPalette(TFT_BLACK, TRANSPARENT, TFT_WHITE, TRANSPARENT);
+        drawBitmap(d, &rightArrow, x0-3, y0+outputBoxHeight/2);
+    }
+
     setCurrentOrigin(ORIGIN_LEFT | ORIGIN_TOP);
     setCurrentPalette(TFT_BLACK, TRANSPARENT, TRANSPARENT, TRANSPARENT);
 
@@ -73,7 +79,7 @@ void mainScreen_updateInput() {
         getOCXOOutputsFromID_(&hmain.chOuts, main_rotIndex+1, &ch);
 
         void* args[] = {ch};
-        requestScreenChange(SCREEN_OUT, args);
+        requestScreenChange(SCREEN_OUT, args, 0);
         return;
     }
 

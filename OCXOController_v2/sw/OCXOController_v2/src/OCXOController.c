@@ -336,28 +336,28 @@ void processUSBMessage_(char* buf, uint32_t len) {
     uint32_t msgLen = 0;
 
     // Detect the Kp, Ki and Kd values for the PID.
-    if(len > 3 && buf[2] == '=') {
-        buf[len - 1] = 0;
+    // if(len > 3 && buf[2] == '=') {
+    //     buf[len - 1] = 0;
 
-        if(buf[0] == 'K'){
-            if(buf[1] == 'p') {
-                Kp = atof(buf + 3);
-                msgLen = sprintf((char*)txBuffer, "New Kp = %.10f\n", Kp);
-            }else if(buf[1] == 'i') {
-                Ki = atof(buf + 3);
-                msgLen = sprintf((char*)txBuffer, "New Ki = %.10f\n", Ki);
-            }else if(buf[1] == 'd') {
-                Kd = atof(buf + 3);
-                msgLen = sprintf((char*)txBuffer, "New Kd = %.10f\n", Kd);
-            }
-        }else if(buf[0] == 'N' && buf[1] == 'f') {
-            Nf = atof(buf + 3);
-            msgLen = sprintf((char*)txBuffer, "New Nf = %.10f\n", Nf);
-        }else if(buf[0] == 'O' && buf[1] == 'f') {
-            phaseOffset = atof(buf + 3);
-            msgLen = sprintf((char*)txBuffer, "New Phase Offset = %.10f\n", phaseOffset);
-        }
-    }
+    //     if(buf[0] == 'K'){
+    //         if(buf[1] == 'p') {
+    //             Kp = atof(buf + 3);
+    //             msgLen = sprintf((char*)txBuffer, "New Kp = %.10f\n", Kp);
+    //         }else if(buf[1] == 'i') {
+    //             Ki = atof(buf + 3);
+    //             msgLen = sprintf((char*)txBuffer, "New Ki = %.10f\n", Ki);
+    //         }else if(buf[1] == 'd') {
+    //             Kd = atof(buf + 3);
+    //             msgLen = sprintf((char*)txBuffer, "New Kd = %.10f\n", Kd);
+    //         }
+    //     }else if(buf[0] == 'N' && buf[1] == 'f') {
+    //         Nf = atof(buf + 3);
+    //         msgLen = sprintf((char*)txBuffer, "New Nf = %.10f\n", Nf);
+    //     }else if(buf[0] == 'O' && buf[1] == 'f') {
+    //         phaseOffset = atof(buf + 3);
+    //         msgLen = sprintf((char*)txBuffer, "New Phase Offset = %.10f\n", phaseOffset);
+    //     }
+    // }
 
     if(strncmp(buf, "CONN", 4) == 0) {
         setUSBConnected(1);

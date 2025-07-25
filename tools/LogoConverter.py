@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 
 # === Settings ===
-input_image_path = "C:/Users/Daniel/repos/OCXOController/OCXOController_v2/Logo/OCXOLogoForTFT_BW.png"
+input_image_path = "C:/Users/Daniel/repos/OCXOController/OCXOController_v2/Logo/BackArrow.png"
 
 def map_pixel_to_2bit(value):
     if 0 <= value <= 36 :
@@ -22,7 +22,7 @@ def process_image(image_path):
 
     height, width = pixels.shape
     if width % 8 != 0:
-        raise ValueError("Image width must be divisible by 8")
+        raise ValueError(f"Image width {width} must be divisible by 8")
 
     u16_data = []
 
