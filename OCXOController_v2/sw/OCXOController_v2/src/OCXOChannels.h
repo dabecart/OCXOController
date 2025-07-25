@@ -21,6 +21,9 @@ typedef struct OCXOChannel {
     uint8_t id;
     VCIO pin;
     uint8_t isOutputON;
+    
+    TIM_HandleTypeDef* htim;
+    uint32_t timCh;
 
     OCXOChannelConfig config;
 
@@ -37,8 +40,8 @@ typedef struct OCXOChannels {
     OCXOChannel ch3;
 } OCXOChannels;
 
-uint8_t initOCXOChannels(OCXOChannels* outs);
-void initOCXOChannel_(OCXOChannel* out, uint8_t id, VCIO pin);
+uint8_t initOCXOChannels(OCXOChannels* outs, TIM_HandleTypeDef* htim3, TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim8);
+void initOCXOChannel_(OCXOChannel* out, uint8_t id, VCIO pin, TIM_HandleTypeDef* htim, uint32_t timChannel);
 
 uint8_t applyOCXOOutputFromConfiguration(OCXOChannels* outs, uint8_t id);
 uint8_t applyAllOCXOOutputsFromConfiguration(OCXOChannels* outs);

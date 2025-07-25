@@ -55,6 +55,12 @@ uint8_t initGPIOController(GPIOController* gpioc, I2C_HandleTypeDef* i2cHandler)
     // Boot up animation of the colored buttons.
     state &= initialAnimationGPIOController_(gpioc);
 
+    // Set all buttons red.
+    setButtonColor(gpioc, BUTTON_1, BUTTON_COLOR_RED);
+    setButtonColor(gpioc, BUTTON_2, BUTTON_COLOR_RED);
+    setButtonColor(gpioc, BUTTON_3, BUTTON_COLOR_RED);
+    setButtonColor(gpioc, BUTTON_4, BUTTON_COLOR_RED);
+
     gpioc->initialized = state;
     return state;
 }
@@ -124,6 +130,8 @@ uint8_t updateGPIOController(GPIOController* hgpio) {
 
                 currentBtn->wasClicked = 1;
                 currentBtn->lastTimeClicked = HAL_GetTick();
+            }else {
+            	currentBtn->isClicked = 0;
             }
             currentBtn->isPressed = newState;
         }else {
@@ -591,11 +599,11 @@ int8_t getFilteredRotaryIncrement(RotaryEncoder* rot) {
 
     // Divide by 2 so that only movements which are "fast" (> 2) register.
     int8_t incr = getRotaryIncrement(rot) / 2;
-    if((incr == 0) || ((t - lastIncrementTime) < 200)) return 0;
+    if((incr == 0) || ((t - lastIncrementTime) < 100)) return 0;
     lastIncrementTime = HAL_GetTick();
     
     // Even if the incr is big, it will be "cut" to only single increments. If multiple increments 
-    // are to be done, then keep moving the encoder for at least 200ms more. 
+    // are to be done, then keep moving the encoder for at least 100ms more. 
     if(incr > 0) incr = 1;
     else if(incr < 0) incr = -1;
     

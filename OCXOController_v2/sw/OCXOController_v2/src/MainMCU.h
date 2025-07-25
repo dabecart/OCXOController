@@ -25,12 +25,12 @@ typedef struct MainHandlers {
     DMA_HandleTypeDef*  hdma_spi1_tx;
     TIM_HandleTypeDef*  htim1;
     TIM_HandleTypeDef*  htim2;
-    TIM_HandleTypeDef*  htim3;
-    TIM_HandleTypeDef*  htim4;
+    TIM_HandleTypeDef*  htim3;  // OUT3
+    TIM_HandleTypeDef*  htim4;  // OUT1
     TIM_HandleTypeDef*  htim5;
     TIM_HandleTypeDef*  htim6;  // GUI refresh interrupt.
     TIM_HandleTypeDef*  htim7;  // GPIO Controller polling interrupt.
-    TIM_HandleTypeDef*  htim8;
+    TIM_HandleTypeDef*  htim8;  // OUT2
     TIM_HandleTypeDef*  htim15;
     UART_HandleTypeDef* huart2;
     DMA_HandleTypeDef*  hdma_usart2_rx;

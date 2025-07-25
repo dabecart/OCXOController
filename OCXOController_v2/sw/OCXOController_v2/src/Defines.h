@@ -8,6 +8,10 @@
 #define PPS_REF_FREQ            1.0     // Hz
 #define OCXO_MAX_VCO_VOLTAGE    4.0     // Volts
 
+// TODO: The OCXO is 10MHz, but due to some poor hw design, the frequency is being "divided" over 2
+// as a limit set by the TIM1 and it's maximum ARR value being 0. 
+#define OCXO_FREQUENCY          5e6    // Hz
+
 // Number of previous edge times to be stored in memory (to calculate derivatives and integrals).
 #define CONTROL_POINTS_IN_MEMORY 128
 // Number of previous edge times to be stored in memory (to calculate current frequencies). They get

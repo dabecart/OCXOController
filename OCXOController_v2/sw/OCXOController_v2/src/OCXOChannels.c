@@ -8,20 +8,24 @@ const int16_t timeUnitsLen = sizeof(timeUnits)/sizeof(char*);
 const char* voltageTags[] = {"5V", "3V3", "1V8"};
 const int16_t voltageTagsLen = sizeof(voltageTags)/sizeof(char*);
 
-uint8_t initOCXOChannels(OCXOChannels* outs) {
+uint8_t initOCXOChannels(OCXOChannels* outs, 
+    TIM_HandleTypeDef* htim3, TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim8) {
     if(outs == NULL) return 0;
 
-    initOCXOChannel_(&outs->ch1, 1, GPIO_OUT1);
-    initOCXOChannel_(&outs->ch2, 2, GPIO_OUT2);
-    initOCXOChannel_(&outs->ch3, 3, GPIO_OUT3);
+    initOCXOChannel_(&outs->ch1, 1, GPIO_OUT1, htim4, TIM_CHANNEL_2);
+    initOCXOChannel_(&outs->ch2, 2, GPIO_OUT2, htim8, TIM_CHANNEL_1);
+    initOCXOChannel_(&outs->ch3, 3, GPIO_OUT3, htim3, TIM_CHANNEL_2);
 
     return applyAllOCXOOutputsFromConfiguration(outs);
 }
 
-void initOCXOChannel_(OCXOChannel* out, uint8_t id, VCIO pin) {
+void initOCXOChannel_(OCXOChannel* out, uint8_t id, VCIO pin, 
+                      TIM_HandleTypeDef* htim, uint32_t timChannel) {
     out->id = id;
     out->pin = pin;
     out->isOutputON = 0;
+    out->htim = htim;
+    out->timCh = timChannel;
 
     if(!readOCXOChannelConfigurationFromEEPROM_(out)) {
         strcpy(out->config.freq, "000.000");
@@ -77,9 +81,82 @@ uint8_t applyOCXOOutputFromConfiguration(OCXOChannels* outs, uint8_t id) {
     float desiredPhase_ns  = charArrayToFloat(out->config.phase, out->config.phaseUnits) * 1e9f;
 
     VoltageLevel desiredVoltage = VOLTAGE_LEVEL_OFF;
-    if(strcmp(out->config.voltage, "5V") == 0)          out->voltage = VOLTAGE_LEVEL_5V;
-    else if(strcmp(out->config.voltage, "3V3") == 0)    out->voltage = VOLTAGE_LEVEL_3V3;
-    else if(strcmp(out->config.voltage, "1V8") == 0)    out->voltage = VOLTAGE_LEVEL_1V8;
+    if(strcmp(out->config.voltage, "5V") == 0)          desiredVoltage = VOLTAGE_LEVEL_5V;
+    else if(strcmp(out->config.voltage, "3V3") == 0)    desiredVoltage = VOLTAGE_LEVEL_3V3;
+    else if(strcmp(out->config.voltage, "1V8") == 0)    desiredVoltage = VOLTAGE_LEVEL_1V8;
+
+    if(out->isOutputON) {
+        // FREQUENCY
+        // The frequency of a channel's output is calculated with the timer values PSC and ARR:
+        // f_out = f_tim / (PSC+1) / (ARR + 1)
+        float psc_arr_f = roundf(OCXO_FREQUENCY / desiredFrequency);
+        uint32_t psc_arr = (uint32_t) psc_arr_f;
+        if(psc_arr_f >= 0x100000000) psc_arr = 0xFFFFFFFF;
+        else if(psc_arr_f < 1)  psc_arr = 1;
+
+        // To get the maximum resolution on the duty cycle, try to maximize the ARR value.
+        uint32_t min_diff = -1;
+        uint16_t best_psc = 0;
+        uint16_t best_arr = 0;
+
+        for (uint32_t arr = 0xFFFF; arr > 1; arr--) {
+            uint32_t psc = psc_arr / arr;
+
+            // Enforce psc < arr and both < 65536.
+            if (psc >= arr || psc >= 0xFFFF) continue;  
+
+            uint32_t prod = psc * arr;
+            uint32_t diff = (prod > psc_arr) ? (prod - psc_arr) : (psc_arr - prod);
+
+            if (diff < min_diff) {
+                min_diff = diff;
+                best_psc = (uint16_t) (psc - 1);
+                best_arr = (uint16_t) (arr - 1);
+
+                // Perfect match found
+                if (diff == 0) break;
+            }
+        }
+
+        // PSC can be 0, but ARR cannot be 0.
+        if(best_arr == 0) best_arr = 1;
+
+        // DUTY CYCLE
+        // The duty cycle (%) is calculated as CCR/ARR. We have ARR, so now calculate CCR.
+        uint32_t bestCCR = roundf(((float) best_arr + 1) * desiredDutyCycle);
+        
+        // PHASE
+        // The phase is set by setting the CNT of the timer before the clock starts running.
+        // An increment of the TIM is made every PSC+1 clock pulses.
+        float deltaTime = 1e9f/OCXO_FREQUENCY * (best_psc + 1);
+        uint16_t initialCNT = desiredPhase_ns / deltaTime;
+
+        // APPLY THE SETTINGS!
+        HAL_TIM_PWM_Stop(out->htim, out->timCh);
+    
+        out->htim->Instance->PSC = best_psc;
+        out->htim->Instance->ARR = best_arr;
+
+        TIM_OC_InitTypeDef sConfigOC = {0};
+        sConfigOC.OCMode = TIM_OCMODE_PWM1;
+        sConfigOC.Pulse = bestCCR;
+        sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+        sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+        sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+        sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+        sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+        HAL_TIM_PWM_ConfigChannel(out->htim, &sConfigOC, out->timCh);
+
+        HAL_TIM_PWM_Start(out->htim, out->timCh);
+
+        __HAL_TIM_SET_COUNTER(out->htim, initialCNT);
+
+        setVoltageLevel(&hmain.gpio, out->pin, desiredVoltage);
+    }else {
+        setVoltageLevel(&hmain.gpio, out->pin, VOLTAGE_LEVEL_OFF);
+
+        HAL_TIM_PWM_Stop(out->htim, out->timCh);
+    }
 
     // If everything went OK set the real values and save in EEPROM.
     out->frequency  = desiredFrequency;
@@ -93,9 +170,16 @@ uint8_t applyOCXOOutputFromConfiguration(OCXOChannels* outs, uint8_t id) {
 }
 
 uint8_t applyAllOCXOOutputsFromConfiguration(OCXOChannels* outs) {
+    // Stop TIM1 (the one generating the clock signal) before setting the OCXO.
+    hmain.htim1->Instance->CR1 &= ~TIM_CR1_CEN;
+
     uint8_t ret = applyOCXOOutputFromConfiguration(outs, outs->ch1.id);
     ret &= applyOCXOOutputFromConfiguration(outs, outs->ch2.id);
     ret &= applyOCXOOutputFromConfiguration(outs, outs->ch3.id);
+
+    // This starts all outputs at the same time.
+    hmain.htim1->Instance->CR1 |= TIM_CR1_CEN;
+
     return ret;
 }
 

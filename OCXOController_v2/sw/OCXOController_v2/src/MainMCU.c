@@ -110,7 +110,7 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
 
     logMessage("Channels...");
     HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
-    startupChecks &= initOCXOChannels(&hmain.chOuts);
+    startupChecks &= initOCXOChannels(&hmain.chOuts, hmain.htim3, hmain.htim4, hmain.htim8);
     if(startupChecks) logMessage("Channels OK");
     else{
         logMessage("Channels ERROR");
@@ -139,46 +139,42 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
 void loopMain() {
     static uint8_t ocxoOn = 0;
 
-    if(hmain.gpio.btn1.isClicked) {
-        ocxoOn = !ocxoOn;
-        powerOCXO(&hmain.gpio, ocxoOn);
-        setButtonColor(&hmain.gpio, BUTTON_1, ocxoOn ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
-    }
-    if(hmain.gpio.btn2.isClicked) {
-        setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_5V);
-        setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_5V);
-
-        setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_RED);
-        setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_OFF);
-        setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_OFF);
-    }
-    if(hmain.gpio.btn3.isClicked) {
-        setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_3V3);
-        setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_3V3);
-
-        setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_OFF);
-        setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_RED);
-        setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_OFF);
-    }
-    if(hmain.gpio.btn4.isClicked) {
-        setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT, VOLTAGE_LEVEL_1V8);
-        setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_1V8);
-
-        setButtonColor(&hmain.gpio, BUTTON_2, BUTTON_COLOR_OFF);
-        setButtonColor(&hmain.gpio, BUTTON_3, BUTTON_COLOR_OFF);
-        setButtonColor(&hmain.gpio, BUTTON_4, BUTTON_COLOR_RED);
-    }
-    
     loopOCXOCOntroller();
 
     updateGPIOController(&hmain.gpio);
 
     updateGUI();
 
-    // static uint32_t lastTimeHere = 0;
-    // if((HAL_GetTick() - lastTimeHere) < 100) return;
-    // lastTimeHere = HAL_GetTick();
-    // updateGUI();
+    if(hmain.gpio.btn1.isClicked) {
+        ocxoOn = !ocxoOn;
+        powerOCXO(&hmain.gpio, ocxoOn);
+        setButtonColor(&hmain.gpio, BUTTON_1, ocxoOn ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
+    }
+
+    if(hmain.gpio.btn2.isClicked) {
+        hmain.chOuts.ch1.isOutputON = !hmain.chOuts.ch1.isOutputON;
+        applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
+
+        setButtonColor(&hmain.gpio, BUTTON_2, 
+            hmain.chOuts.ch1.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
+    }
+
+    if(hmain.gpio.btn3.isClicked) {
+        hmain.chOuts.ch2.isOutputON = !hmain.chOuts.ch2.isOutputON;
+        applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
+
+        setButtonColor(&hmain.gpio, BUTTON_3, 
+            hmain.chOuts.ch2.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
+    }
+
+    if(hmain.gpio.btn4.isClicked) {
+        hmain.chOuts.ch3.isOutputON = !hmain.chOuts.ch3.isOutputON;
+        applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
+
+        setButtonColor(&hmain.gpio, BUTTON_4, 
+            hmain.chOuts.ch3.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
+    }
+    
 }
 
 void errorTrapMain() {

@@ -320,8 +320,6 @@ void updateFrequencyFields(int8_t rotIncrement) {
 
         default: break;
     }
-
-    applyOCXOOutputFromConfiguration(&hmain.chOuts, outCh->id);
 }
 
 void updateDutyCycleFields(int8_t rotIncrement) {
@@ -351,8 +349,6 @@ void updateDutyCycleFields(int8_t rotIncrement) {
 
         default: break;
     }
-
-    applyOCXOOutputFromConfiguration(&hmain.chOuts, outCh->id);
 }
 
 void updatePhaseFields(int8_t rotIncrement) {
@@ -403,8 +399,6 @@ void updatePhaseFields(int8_t rotIncrement) {
 
         default: break;
     }
-
-    applyOCXOOutputFromConfiguration(&hmain.chOuts, outCh->id);
 }
 
 void updateVoltageFields(int8_t rotIncrement) {
@@ -437,8 +431,6 @@ void updateVoltageFields(int8_t rotIncrement) {
 
         default: break;
     }
-
-    applyOCXOOutputFromConfiguration(&hmain.chOuts, outCh->id);
 }
 
 void outScreen_updateInput() {
@@ -503,8 +495,10 @@ void outScreen_updateInput() {
                 case SCREEN_OUT_DUTY_CYCLE: updateDutyCycleFields(rotIncrement);    break;    
                 case SCREEN_OUT_PHASE:      updatePhaseFields(rotIncrement);        break;
                 case SCREEN_OUT_VOLTAGE:    updateVoltageFields(rotIncrement);      break;    
-                default:                    break;
+                default:                    return;
             }
+
+            applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
 
             break;
         }
