@@ -60,6 +60,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define TEST_LED_Pin GPIO_PIN_13
 #define TEST_LED_GPIO_Port GPIOC
+#define OCXO_DIVIDED_Pin GPIO_PIN_1
+#define OCXO_DIVIDED_GPIO_Port GPIOA
 #define TFT_A0_Pin GPIO_PIN_0
 #define TFT_A0_GPIO_Port GPIOB
 #define TFT_RESET_Pin GPIO_PIN_1
@@ -72,6 +74,12 @@ void Error_Handler(void);
 #define PG_1V8_GPIO_Port GPIOB
 #define PG_3V3_Pin GPIO_PIN_13
 #define PG_3V3_GPIO_Port GPIOB
+#define CH_OUT3_Pin GPIO_PIN_5
+#define CH_OUT3_GPIO_Port GPIOB
+#define CH_OUT2_Pin GPIO_PIN_6
+#define CH_OUT2_GPIO_Port GPIOB
+#define CH_OUT1_Pin GPIO_PIN_7
+#define CH_OUT1_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

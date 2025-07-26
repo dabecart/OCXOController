@@ -55,12 +55,6 @@ uint8_t initGPIOController(GPIOController* gpioc, I2C_HandleTypeDef* i2cHandler)
     // Boot up animation of the colored buttons.
     state &= initialAnimationGPIOController_(gpioc);
 
-    // Set all buttons red.
-    setButtonColor(gpioc, BUTTON_1, BUTTON_COLOR_RED);
-    setButtonColor(gpioc, BUTTON_2, BUTTON_COLOR_RED);
-    setButtonColor(gpioc, BUTTON_3, BUTTON_COLOR_RED);
-    setButtonColor(gpioc, BUTTON_4, BUTTON_COLOR_RED);
-
     gpioc->initialized = state;
     return state;
 }

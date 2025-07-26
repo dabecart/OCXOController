@@ -154,25 +154,16 @@ void loopMain() {
     if(hmain.gpio.btn2.isClicked) {
         hmain.chOuts.ch1.isOutputON = !hmain.chOuts.ch1.isOutputON;
         applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
-
-        setButtonColor(&hmain.gpio, BUTTON_2, 
-            hmain.chOuts.ch1.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
     }
 
     if(hmain.gpio.btn3.isClicked) {
         hmain.chOuts.ch2.isOutputON = !hmain.chOuts.ch2.isOutputON;
         applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
-
-        setButtonColor(&hmain.gpio, BUTTON_3, 
-            hmain.chOuts.ch2.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
     }
 
     if(hmain.gpio.btn4.isClicked) {
         hmain.chOuts.ch3.isOutputON = !hmain.chOuts.ch3.isOutputON;
         applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
-
-        setButtonColor(&hmain.gpio, BUTTON_4, 
-            hmain.chOuts.ch3.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
     }
     
 }
