@@ -12,20 +12,24 @@ uint8_t initOCXOChannels(OCXOChannels* outs,
     TIM_HandleTypeDef* htim3, TIM_HandleTypeDef* htim4, TIM_HandleTypeDef* htim8) {
     if(outs == NULL) return 0;
 
-    initOCXOChannel_(&outs->ch1, 1, GPIO_OUT1, htim4, TIM_CHANNEL_2);
-    initOCXOChannel_(&outs->ch2, 2, GPIO_OUT2, htim8, TIM_CHANNEL_1);
-    initOCXOChannel_(&outs->ch3, 3, GPIO_OUT3, htim3, TIM_CHANNEL_2);
+    initOCXOChannel_(&outs->ch1, 1, GPIO_OUT1, BUTTON_2, htim4, TIM_CHANNEL_2, CH_OUT1_GPIO_Port, CH_OUT1_Pin);
+    initOCXOChannel_(&outs->ch2, 2, GPIO_OUT2, BUTTON_3, htim8, TIM_CHANNEL_1, CH_OUT2_GPIO_Port, CH_OUT2_Pin);
+    initOCXOChannel_(&outs->ch3, 3, GPIO_OUT3, BUTTON_4, htim3, TIM_CHANNEL_2, CH_OUT3_GPIO_Port, CH_OUT3_Pin);
 
     return applyAllOCXOOutputsFromConfiguration(outs);
 }
 
-void initOCXOChannel_(OCXOChannel* out, uint8_t id, VCIO pin, 
-                      TIM_HandleTypeDef* htim, uint32_t timChannel) {
+void initOCXOChannel_(OCXOChannel* out, uint8_t id, VCIO pin, Button btn,
+                      TIM_HandleTypeDef* htim, uint32_t timChannel,
+                      GPIO_TypeDef* hgpio, uint32_t gpioPin) {
     out->id = id;
     out->pin = pin;
+    out->btn = btn;
     out->isOutputON = 0;
     out->htim = htim;
     out->timCh = timChannel;
+    out->hgpio = hgpio;
+    out->gpioPin = gpioPin;
 
     if(!readOCXOChannelConfigurationFromEEPROM_(out)) {
         strcpy(out->config.freq, "000.000");
@@ -158,11 +162,30 @@ uint8_t applyOCXOOutputFromConfiguration(OCXOChannels* outs, uint8_t id) {
         HAL_TIM_PWM_Stop(out->htim, out->timCh);
     }
 
+    HAL_GPIO_WritePin(out->hgpio, out->gpioPin, GPIO_PIN_SET);
+
     // If everything went OK set the real values and save in EEPROM.
     out->frequency  = desiredFrequency;
     out->dutyCycle  = desiredDutyCycle;
     out->phase_ns   = desiredPhase_ns;
     out->voltage    = desiredVoltage;
+
+    if(out->isOutputON) {
+        switch (out->voltage) {
+            case VOLTAGE_LEVEL_5V:
+                setButtonColor(&hmain.gpio, out->btn, BUTTON_COLOR_CYAN);
+                break;
+            case VOLTAGE_LEVEL_3V3:
+                setButtonColor(&hmain.gpio, out->btn, BUTTON_COLOR_GREEN);
+                break;
+            case VOLTAGE_LEVEL_1V8:
+                setButtonColor(&hmain.gpio, out->btn, BUTTON_COLOR_PINK);
+                break;
+            default:    break;
+        }
+    }else {
+        setButtonColor(&hmain.gpio, out->btn, BUTTON_COLOR_RED);
+    }
 
     saveOCXOChannelConfigurationInEEPROM_(out);
 
@@ -170,16 +193,34 @@ uint8_t applyOCXOOutputFromConfiguration(OCXOChannels* outs, uint8_t id) {
 }
 
 uint8_t applyAllOCXOOutputsFromConfiguration(OCXOChannels* outs) {
+    __disable_irq();
+
+    TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+    sSlaveConfig.SlaveMode = TIM_SLAVEMODE_DISABLE;
+    sSlaveConfig.InputTrigger = TIM_TS_TI2FP2;
+    sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_RISING;
+    sSlaveConfig.TriggerFilter = 0;
+    HAL_TIM_SlaveConfigSynchro(hmain.htim1, &sSlaveConfig);
+
     // Stop TIM1 (the one generating the clock signal) before setting the OCXO.
     hmain.htim1->Instance->CR1 &= ~TIM_CR1_CEN;
+    __HAL_TIM_SET_COUNTER(hmain.htim1, 0);
+
+    // Also set the divider of the OCXO to PPS timer so that everything falls in phase.
+    __HAL_TIM_SET_COUNTER(hmain.htim5, 0);
+    HAL_GPIO_WritePin(OCXO_DIVIDED_GPIO_Port, OCXO_DIVIDED_Pin, GPIO_PIN_SET);
 
     uint8_t ret = applyOCXOOutputFromConfiguration(outs, outs->ch1.id);
     ret &= applyOCXOOutputFromConfiguration(outs, outs->ch2.id);
     ret &= applyOCXOOutputFromConfiguration(outs, outs->ch3.id);
 
     // This starts all outputs at the same time.
-    hmain.htim1->Instance->CR1 |= TIM_CR1_CEN;
+    // hmain.htim1->Instance->CR1 |= TIM_CR1_CEN;
 
+    sSlaveConfig.SlaveMode = TIM_SLAVEMODE_TRIGGER;
+    HAL_TIM_SlaveConfigSynchro(hmain.htim1, &sSlaveConfig);
+
+    __enable_irq();
     return ret;
 }
 

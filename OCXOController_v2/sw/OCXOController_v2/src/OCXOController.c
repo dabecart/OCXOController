@@ -86,11 +86,11 @@ uint8_t initOCXOController(TIM_HandleTypeDef* ppsTim_, TIM_HandleTypeDef* ocxoTi
 
     // Initialization of the timestamping timers.
     status &= HAL_TIM_IC_Start_IT(ppsTim, TIM_CHANNEL_1) == HAL_OK;
-    status &= HAL_TIM_IC_Start_IT(ppsTim, TIM_CHANNEL_2) == HAL_OK;
+//    status &= HAL_TIM_IC_Start_IT(ppsTim, TIM_CHANNEL_2) == HAL_OK;
     __HAL_TIM_DISABLE_IT(ppsTim, TIM_IT_UPDATE);
     
     status &= HAL_TIM_IC_Start_IT(ocxoTim, TIM_CHANNEL_1) == HAL_OK;
-    status &= HAL_TIM_IC_Start_IT(ocxoTim, TIM_CHANNEL_3) == HAL_OK;
+//    status &= HAL_TIM_IC_Start_IT(ocxoTim, TIM_CHANNEL_3) == HAL_OK;
     __HAL_TIM_DISABLE_IT(ocxoTim, TIM_IT_UPDATE);
 
     // Init USB.

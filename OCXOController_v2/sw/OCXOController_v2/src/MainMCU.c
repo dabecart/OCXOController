@@ -123,9 +123,7 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
 
     setVoltageLevel(&hmain.gpio, GPIO_OCXO_OUT,     VOLTAGE_LEVEL_5V);
     setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_IN,   VOLTAGE_LEVEL_3V3);
-
-    HAL_TIM_Base_Start(hmain.htim1);
-    HAL_TIM_OC_Start(hmain.htim1, TIM_CHANNEL_3);
+    setVoltageLevel(&hmain.gpio, GPIO_PPS_REF_OUT,   VOLTAGE_LEVEL_5V);
 
     logMessage("Enjoy!");
 
@@ -154,25 +152,16 @@ void loopMain() {
     if(hmain.gpio.btn2.isClicked) {
         hmain.chOuts.ch1.isOutputON = !hmain.chOuts.ch1.isOutputON;
         applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
-
-        setButtonColor(&hmain.gpio, BUTTON_2, 
-            hmain.chOuts.ch1.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
     }
 
     if(hmain.gpio.btn3.isClicked) {
         hmain.chOuts.ch2.isOutputON = !hmain.chOuts.ch2.isOutputON;
         applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
-
-        setButtonColor(&hmain.gpio, BUTTON_3, 
-            hmain.chOuts.ch2.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
     }
 
     if(hmain.gpio.btn4.isClicked) {
         hmain.chOuts.ch3.isOutputON = !hmain.chOuts.ch3.isOutputON;
         applyAllOCXOOutputsFromConfiguration(&hmain.chOuts);
-
-        setButtonColor(&hmain.gpio, BUTTON_4, 
-            hmain.chOuts.ch3.isOutputON ? BUTTON_COLOR_GREEN : BUTTON_COLOR_RED);
     }
     
 }
