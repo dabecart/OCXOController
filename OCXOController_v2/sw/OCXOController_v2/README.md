@@ -16,6 +16,8 @@ TIM1 is set as Slave mode: "Trigger Mode" on "TI2FP2" (PA9) which is connected t
 
 Channel 3 is set as "Output Compare" with Pulse = 0 and Mode = "Toggle on match". It will replicate the OCXO signal but at a 3V3 level.
 
+**NOTE.** By setting the counter period to 1, the clock signal is being divided by 2, that is, 5MHz is being put into the ITR0, not 10! The counter period cannot be 0, the TIM doesn't turn on with this value...
+
 ### TIM5: Divides the OCXO signal down to the reference PPS frequency
 
 - Slave mode: External Clock Mode 1
@@ -26,10 +28,14 @@ This timer was used as a hack to not route the OCXO_OUT signal to multiple pins,
 
 Channel 2 is set as "Output Compare" (PA1). On this pin the divided OCXO signal will be generated.
 
+TIM5 generates a TRGO (Trigger Output) on the Output Compare 2. This is used to start at the same time the timestamping clocks (TIM2 and TIM15).
+
+**NOTE.** As previously said, ITR0 is 5MHz not 10MHz, therefore the Counter Period must be 2499. 
+
 ### TIM2: Timestamps the OCXO output divided down to the PPS reference frequency
 
-- Slave mode: Disable
-- Trigger Source: Disable
+- Slave mode: Trigger Mode
+- Trigger Source: ITR4
 - Clock source: Internal
 
 TIM2 is used to get the timestamps of the OCXO output after being divided to the reference PPS' frequency. These timestamps will be compared to the timestamps of the reference PPS to tune the OCXO. 
@@ -38,15 +44,17 @@ The shrinked down OCXO signal is being replicated by TIM5 at pin PA1. Channel 1 
 
 Note: TIM2 is a 32 bit timer. As timestamps are being made in TIM2 and TIM15, they should have the same range. That is why TIM2 has its "Counter Period" set to 65535, to match that of TIM15.
 
+TIM2 is set as Slave Mode "Trigger Mode" with Trigger Source "ITR4" so that this timer starts working on the first pulse of the divided OCXO signal.
+
 ### TIM15: Timestamps the PPS reference
 
 - Slave mode: Trigger Mode
-- Trigger Source: ITR0
+- Trigger Source: ITR4
 - Clock source: Internal
 
 TIM15 is used to timestamp with the clock of the microcontroller the rising and falling edges of the PPS_REF signal. Channel 1 (PB15) and 2 (PB14) are set as "Input Capture direct mode".
 
-TIM15 is set as Slave Mode "Trigger Mode" with Trigger Source "ITR0" so that this timer starts working on the first pulse of the TIM1, which is also set to trigger on the reference PPS. In other words, TIM15 will start running when the first edge of the PPS reference is detected.
+TIM15 is set as Slave Mode "Trigger Mode" with Trigger Source "ITR4" so that this timer starts working on the the first pulse of the divided OCXO signal.
 
 ### TIM3, TIM4, TIM8: Generate the OUT1, OUT2 and OUT3 signals
 

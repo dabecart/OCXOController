@@ -36,11 +36,11 @@ uint32_t risingOCXOArray [CONTROL_CLOSE_POINTS_IN_MEMORY];
 uint32_t fallingOCXOArray[CONTROL_CLOSE_POINTS_IN_MEMORY];
 
 // Proportional gain.
-double Kp = 0.026;
+double Kp = 0.05;
 // Integral gain.
-double Ki = 0.004;
+double Ki = 0.002;
 // Differential gain.
-double Kd = 0.006;
+double Kd = 0.001;
 // Low pass filter of the VCO.
 double Nf = 0.1;
 // Filter of the derivative value.
@@ -111,6 +111,8 @@ void loopOCXOCOntroller() {
     // Find matching timestamps to generate the errors and calculate the new VCO voltage if a new
     // error value is found.
     if(newRisingEdge) {
+        hmain.isReferenceSignalConnected = 1;
+
         newRisingEdge = 0;
         if(doingCalibration) {
             calibrateOCXO(&risingEdgesFreq);
@@ -236,7 +238,7 @@ void calculateNewVCO_(LIFO_d* freqValues) {
     #endif
 
     // In "step" mode, the MCU takes fixed steps of the VCO.
-    // step_controlMode_(deltaTime);
+    // step_controlMode_(freqValues);
 
     // In "PID" mode, the VCO voltage is proportional to the frequency error, its integral and 
     // derivative.
@@ -274,6 +276,7 @@ void pid_controlMode_(LIFO_d* freqValues) {
         
         // Anti wind-up control.
         if(frequencyIntegral > antiwindupLimit) frequencyIntegral = antiwindupLimit;
+        else if(frequencyIntegral < (-antiwindupLimit)) frequencyIntegral = -antiwindupLimit;
 
     }
 
@@ -300,6 +303,7 @@ void pid_controlMode_(LIFO_d* freqValues) {
         vcoValue = (int) newVCO;
     }
 
+    // "e=%e, i=%e, d=%e. Kp*e=%e, Ki*i=%e, Kd*d=%e. u=%d\n", frequencyError, frequencyIntegral, frequencyDerivative, frequencyError * Kp, frequencyIntegral * Ki, frequencyDerivative * Kd, newVCO
     uint32_t len = sprintf((char*)txBuffer, "VCO=%.12f, %ld\n", newVCO, vcoValue);
     sendMessageUSB(txBuffer, len);
     len = sprintf((char*)txBuffer, "e=%.12f, Kp=%.12f\n", frequencyError, Kp);
@@ -313,9 +317,14 @@ void pid_controlMode_(LIFO_d* freqValues) {
 
 }
 
-void step_controlMode_(double deltaTime) {
+void step_controlMode_(LIFO_d* freqValues) {
     // Increment/Decrement step for the VCO control signal.
     const uint32_t CONTROL_SINGLE_STEP_VCO = 10;
+
+    double currentOCXOFreq = 0;
+    peek_LIFO_d(freqValues, &currentOCXOFreq);
+
+    double deltaTime = PPS_REF_FREQ - currentOCXOFreq;
 
     // The deltaTime can be either above or below TIME_BETWEEN_PPS / 2. If the PPS is bellow this 
     // threshold the OCXO should be slowed down. If it's above, then it should run faster.
@@ -336,28 +345,28 @@ void processUSBMessage_(char* buf, uint32_t len) {
     uint32_t msgLen = 0;
 
     // Detect the Kp, Ki and Kd values for the PID.
-    // if(len > 3 && buf[2] == '=') {
-    //     buf[len - 1] = 0;
+    if(len > 3 && buf[2] == '=') {
+        buf[len - 1] = 0;
 
-    //     if(buf[0] == 'K'){
-    //         if(buf[1] == 'p') {
-    //             Kp = atof(buf + 3);
-    //             msgLen = sprintf((char*)txBuffer, "New Kp = %.10f\n", Kp);
-    //         }else if(buf[1] == 'i') {
-    //             Ki = atof(buf + 3);
-    //             msgLen = sprintf((char*)txBuffer, "New Ki = %.10f\n", Ki);
-    //         }else if(buf[1] == 'd') {
-    //             Kd = atof(buf + 3);
-    //             msgLen = sprintf((char*)txBuffer, "New Kd = %.10f\n", Kd);
-    //         }
-    //     }else if(buf[0] == 'N' && buf[1] == 'f') {
-    //         Nf = atof(buf + 3);
-    //         msgLen = sprintf((char*)txBuffer, "New Nf = %.10f\n", Nf);
-    //     }else if(buf[0] == 'O' && buf[1] == 'f') {
-    //         phaseOffset = atof(buf + 3);
-    //         msgLen = sprintf((char*)txBuffer, "New Phase Offset = %.10f\n", phaseOffset);
-    //     }
-    // }
+        if(buf[0] == 'K'){
+            if(buf[1] == 'p') {
+                Kp = atof(buf + 3);
+                msgLen = sprintf((char*)txBuffer, "New Kp = %.10f\n", Kp);
+            }else if(buf[1] == 'i') {
+                Ki = atof(buf + 3);
+                msgLen = sprintf((char*)txBuffer, "New Ki = %.10f\n", Ki);
+            }else if(buf[1] == 'd') {
+                Kd = atof(buf + 3);
+                msgLen = sprintf((char*)txBuffer, "New Kd = %.10f\n", Kd);
+            }
+        }else if(buf[0] == 'N' && buf[1] == 'f') {
+            Nf = atof(buf + 3);
+            msgLen = sprintf((char*)txBuffer, "New Nf = %.10f\n", Nf);
+        }else if(buf[0] == 'O' && buf[1] == 'f') {
+            phaseOffset = atof(buf + 3);
+            msgLen = sprintf((char*)txBuffer, "New Phase Offset = %.10f\n", phaseOffset);
+        }
+    }
 
     if(strncmp(buf, "CONN", 4) == 0) {
         setUSBConnected(1);
@@ -480,7 +489,7 @@ uint8_t findMatchedTimestampsAndCalculateFrequency_(LIFO_u32* ppsRef, LIFO_u32* 
             peekAt_LIFO_u32(ppsRef, ppsRefIndex, &lastPPSRef);
             
             // deltaTime is between [-TIME_BETWEEN_PPS/2, TIME_BETWEEN_PPS/2]
-            deltaTime = ((int32_t) (lastOCXO - lastPPSRef)) * timePerIncrement;
+            deltaTime = ((int16_t) (((uint16_t)lastOCXO) - ((uint16_t)lastPPSRef))) * timePerIncrement;
             if((deltaTime >= -TIME_BETWEEN_PPS/2) && (deltaTime <= TIME_BETWEEN_PPS/2)) {
                 // Found a pair.
                 foundPair = 1;

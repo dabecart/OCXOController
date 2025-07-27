@@ -25,7 +25,7 @@ void calibrateOCXO(LIFO_d* freq);
 
 double calculateFrequencyFromTimestamps_();
 
-void step_controlMode_(double deltaTime);
+void step_controlMode_(LIFO_d* freq);
 
 void pid_controlMode_(LIFO_d* freq);
 

@@ -195,6 +195,8 @@ uint8_t applyOCXOOutputFromConfiguration(OCXOChannels* outs, uint8_t id) {
 uint8_t applyAllOCXOOutputsFromConfiguration(OCXOChannels* outs) {
     __disable_irq();
 
+    // Disable the slave mode Trigger of TIM1, which makes TIM1 start when an edge is received from 
+    // the reference signal.
     TIM_SlaveConfigTypeDef sSlaveConfig = {0};
     sSlaveConfig.SlaveMode = TIM_SLAVEMODE_DISABLE;
     sSlaveConfig.InputTrigger = TIM_TS_TI2FP2;
@@ -204,11 +206,19 @@ uint8_t applyAllOCXOOutputsFromConfiguration(OCXOChannels* outs) {
 
     // Stop TIM1 (the one generating the clock signal) before setting the OCXO.
     hmain.htim1->Instance->CR1 &= ~TIM_CR1_CEN;
-    __HAL_TIM_SET_COUNTER(hmain.htim1, 0);
+    // Set to 1 so the next clock triggers an update event.
+    __HAL_TIM_SET_COUNTER(hmain.htim1, 1); 
 
     // Also set the divider of the OCXO to PPS timer so that everything falls in phase.
-    __HAL_TIM_SET_COUNTER(hmain.htim5, 0);
-    HAL_GPIO_WritePin(OCXO_DIVIDED_GPIO_Port, OCXO_DIVIDED_Pin, GPIO_PIN_SET);
+    // Set also so that the next clock triggers an interrupt.
+    __HAL_TIM_SET_COUNTER(hmain.htim5, 2499);
+    HAL_GPIO_WritePin(OCXO_DIVIDED_GPIO_Port, OCXO_DIVIDED_Pin, GPIO_PIN_RESET);
+
+    // Stop the timestamping timers and reset them.
+    hmain.htim2->Instance->CR1 &= ~TIM_CR1_CEN;
+    hmain.htim15->Instance->CR1 &= ~TIM_CR1_CEN;
+    __HAL_TIM_SET_COUNTER(hmain.htim2, 0);
+    __HAL_TIM_SET_COUNTER(hmain.htim15, 0);
 
     uint8_t ret = applyOCXOOutputFromConfiguration(outs, outs->ch1.id);
     ret &= applyOCXOOutputFromConfiguration(outs, outs->ch2.id);
@@ -219,6 +229,12 @@ uint8_t applyAllOCXOOutputsFromConfiguration(OCXOChannels* outs) {
 
     sSlaveConfig.SlaveMode = TIM_SLAVEMODE_TRIGGER;
     HAL_TIM_SlaveConfigSynchro(hmain.htim1, &sSlaveConfig);
+
+    // Now TIM1 is waiting for the reference signal to be sent.
+    if(!hmain.isReferenceSignalConnected) {
+        // If the reference signal is not connected, trigger TIM1 manually.
+        hmain.htim1->Instance->CR1 |= TIM_CR1_CEN;
+    }
 
     __enable_irq();
     return ret;

@@ -39,6 +39,8 @@ typedef struct MainHandlers {
 
     uint8_t doingInitialization;
     uint8_t initialized;
+    uint8_t isReferenceSignalConnected;
+    uint32_t lastReferenceSignalTime;
 
     GPIOController      gpio;
     ExEEPROM            eeprom;

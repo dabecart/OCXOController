@@ -118,6 +118,21 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     } 
     HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
 
+    HAL_TIM_OC_Start(hmain.htim1, TIM_CHANNEL_3);
+    // Wait for the trigger (the reference PPS) to turn on TIM1.
+    logMessage("Awaiting reference...");
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+    uint32_t t = HAL_GetTick();
+    while((HAL_GetTick() - t) < 2500 && ((hmain.htim1->Instance->CR1 & TIM_CR1_CEN) == 0)) {}
+    if((hmain.htim1->Instance->CR1 & TIM_CR1_CEN) == 0) {
+        // Forcefully activate it.
+        hmain.htim1->Instance->CR1 |= TIM_CR1_CEN;
+        logMessage("Forced OCXO start");
+    }else {
+        logMessage("Reference received!");
+    }
+    HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
+
     // Turn on the LED.
     HAL_GPIO_WritePin(TEST_LED_GPIO_Port, TEST_LED_Pin, 1);
 

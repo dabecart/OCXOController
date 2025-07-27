@@ -13,7 +13,7 @@
 #define OCXO_FREQUENCY          5e6    // Hz
 
 // Number of previous edge times to be stored in memory (to calculate derivatives and integrals).
-#define CONTROL_POINTS_IN_MEMORY 128
+#define CONTROL_POINTS_IN_MEMORY 60 // At 1Hz reference, this will be around 1 minute of data.
 // Number of previous edge times to be stored in memory (to calculate current frequencies). They get
 // deleted continuously.
 #define CONTROL_CLOSE_POINTS_IN_MEMORY 4
