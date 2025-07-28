@@ -112,6 +112,7 @@ void loopOCXOCOntroller() {
     // error value is found.
     if(newRisingEdge) {
         hmain.isReferenceSignalConnected = 1;
+        hmain.lastReferenceSignalTime = HAL_GetTick();
 
         newRisingEdge = 0;
         if(doingCalibration) {
@@ -137,6 +138,10 @@ void loopOCXOCOntroller() {
         processUSBMessage_((char*) rxBuffer, rxLen);
     }
 
+
+    if((HAL_GetTick() - hmain.lastReferenceSignalTime) > OCXO_REFERENCE_TIMEOUT_ms) {
+        hmain.isReferenceSignalConnected = 0;
+    }
 }
 
 void calibrateOCXO(LIFO_d* freqs) {
@@ -246,9 +251,9 @@ void calculateNewVCO_(LIFO_d* freqValues) {
 }
 
 void pid_controlMode_(LIFO_d* freqValues) {
-    static double frequencyDerivative = 0;
+    static double frequencyDerivative = 0.0;
+    static double frequencyIntegral = 0.0;
 
-    double frequencyIntegral = 0;
     double currentOCXOFreq = 0, previousOCXOFreq = 0;
     // Remember that the first element in the LIFO is the newest!
     peek_LIFO_d(freqValues, &currentOCXOFreq);
@@ -261,18 +266,7 @@ void pid_controlMode_(LIFO_d* freqValues) {
         frequencyDerivative = (frequencyDerivative * Df) + 
                               (((currentOCXOFreq - previousOCXOFreq) / TIME_BETWEEN_PPS) * (1.0 - Df));
 
-        // Instead of calculating the integral of the error, subtract the integral of PPS_REF_FREQ
-        // from the integral of the frequencies.
-        frequencyIntegral = PPS_REF_FREQ * TIME_BETWEEN_PPS * (freqValues->len - 1);
-        // Initial value for the integration algorithm.
-        previousOCXOFreq = currentOCXOFreq;
-        for(int i = 1; i < freqValues->len; i++) {
-            currentOCXOFreq = previousOCXOFreq;
-            peekAt_LIFO_d(freqValues, i, &previousOCXOFreq);
-
-            // Area of the trapezoid to calculate the components of the integral.
-            frequencyIntegral -= (previousOCXOFreq + currentOCXOFreq) * TIME_BETWEEN_PPS / 2.0;
-        }
+        frequencyIntegral += frequencyError * TIME_BETWEEN_PPS;
         
         // Anti wind-up control.
         if(frequencyIntegral > antiwindupLimit) frequencyIntegral = antiwindupLimit;

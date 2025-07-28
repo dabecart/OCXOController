@@ -209,10 +209,8 @@ uint8_t applyAllOCXOOutputsFromConfiguration(OCXOChannels* outs) {
     // Set to 1 so the next clock triggers an update event.
     __HAL_TIM_SET_COUNTER(hmain.htim1, 1); 
 
-    // Also set the divider of the OCXO to PPS timer so that everything falls in phase.
-    // Set also so that the next clock triggers an interrupt.
-    __HAL_TIM_SET_COUNTER(hmain.htim5, 2499);
-    HAL_GPIO_WritePin(OCXO_DIVIDED_GPIO_Port, OCXO_DIVIDED_Pin, GPIO_PIN_RESET);
+    // Also set to 0 the OCXO divider so that everything falls in phase.
+    __HAL_TIM_SET_COUNTER(hmain.htim5, 0);
 
     // Stop the timestamping timers and reset them.
     hmain.htim2->Instance->CR1 &= ~TIM_CR1_CEN;

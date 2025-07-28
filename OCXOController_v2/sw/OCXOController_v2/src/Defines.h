@@ -38,6 +38,9 @@
 // Number of measurements to calculate the frequency during calibration.
 #define OCXO_CALIBRATION_FREQUENCY_MEASUREMENTS 5
 
+// Time to wait after the reference signal is lost to set the OCXO as "not being disciplined".
+#define OCXO_REFERENCE_TIMEOUT_ms 5*1000.0/PPS_REF_FREQ
+
 // I2C Addresses.
 #define I2C_ADD_USB_C               0b0101000
 #define I2C_ADD_EEPROM              0b1010000
