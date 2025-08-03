@@ -108,6 +108,10 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
     } 
     HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
 
+    // Set this as connected so that the TIM1 does not get started during the OCXOChannels 
+    // initialization.
+    hmain.isReferenceSignalConnected = 1;
+
     logMessage("Channels...");
     HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
     startupChecks &= initOCXOChannels(&hmain.chOuts, hmain.htim3, hmain.htim4, hmain.htim8);
@@ -128,8 +132,12 @@ void initMain(I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c3,
         // Forcefully activate it.
         hmain.htim1->Instance->CR1 |= TIM_CR1_CEN;
         logMessage("Forced OCXO start");
+
+        hmain.isReferenceSignalConnected = 0;
     }else {
         logMessage("Reference received!");
+        
+        hmain.isReferenceSignalConnected = 1;
     }
     HAL_Delay(GUI_INTERVAL_BETWEEN_INITIALIZATIONS_ms);
 

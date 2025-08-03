@@ -280,6 +280,7 @@ uint8_t wasButtonClicked(GPIOController* hgpio, Button btn) {
             btnData = &hgpio->btnRot;
             break;
         }
+        default: return 0;
     }
 
     uint8_t ret = 0;
